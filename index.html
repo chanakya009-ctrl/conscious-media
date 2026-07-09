@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conscious Media — Debu</title>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f5f1ea;
+  --bg-card: #ffffff;
+  --bg-hover: #ece7dd;
+  --text: #1c1712;
+  --text-muted: #7a6d5e;
+  --accent: #8b4e2f;
+  --accent2: #3d6b52;
+  --border: #e0d8cc;
+  --tag-bg: #ece7dd;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.6; }
+
+header { padding: 18px 24px 12px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: flex-end; }
+.h-title { font-family: Georgia, serif; font-size: 20px; font-weight: normal; }
+.h-sub { font-size: 11px; color: var(--text-muted); margin-top: 2px; letter-spacing: 0.3px; }
+.h-date strong { display: block; font-family: Georgia, serif; font-size: 13px; color: var(--accent); font-weight: normal; }
+.h-date { font-size: 11px; color: var(--text-muted); text-align: right; }
+
+.tabs { display: flex; padding: 0 24px; border-bottom: 1px solid var(--border); background: var(--bg); overflow-x: auto; gap: 0; }
+.tab { padding: 11px 14px; font-size: 12.5px; color: var(--text-muted); cursor: pointer; border: none; border-bottom: 2px solid transparent; background: none; white-space: nowrap; transition: color 0.15s, border-color 0.15s; font-family: inherit; }
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
+
+.content { padding: 20px 24px; max-width: 960px; }
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* CARDS */
+.pick-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 22px; margin-bottom: 14px; }
+.eyebrow { font-size: 10px; text-transform: uppercase; letter-spacing: 1.8px; color: var(--accent); font-weight: 600; margin-bottom: 10px; }
+.eyebrow.green { color: var(--accent2); }
+.pick-title { font-family: Georgia, serif; font-size: 19px; font-weight: normal; line-height: 1.3; margin-bottom: 6px; }
+.pick-source { font-size: 11px; color: var(--text-muted); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+.pick-body { font-size: 13px; line-height: 1.75; color: var(--text); margin-bottom: 16px; }
+.btn { display: inline-block; padding: 7px 16px; background: var(--accent); color: white; text-decoration: none; border-radius: 5px; font-size: 12px; font-weight: 500; }
+.btn:hover { opacity: 0.88; }
+.btn-ghost { background: none; border: 1px solid var(--border); color: var(--text-muted); }
+.btn-ghost:hover { background: var(--bg-hover); color: var(--text); }
+.tag { background: var(--tag-bg); color: var(--text-muted); padding: 2px 7px; border-radius: 3px; font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+
+.ai-card { background: linear-gradient(135deg, #f8f4ee, #ece7dd); border: 1px dashed var(--border); border-radius: 8px; padding: 20px 22px; min-height: 90px; }
+#ai-body { font-size: 13px; line-height: 1.75; color: var(--text-muted); font-style: italic; font-family: Georgia, serif; }
+#ai-body.loaded { color: var(--text); font-style: normal; font-size: 13.5px; line-height: 1.8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+
+/* NEWS */
+.news-section { margin-bottom: 22px; }
+.news-section-title { font-size: 10.5px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; color: var(--text-muted); margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+.news-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+.news-card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 5px; }
+.news-name { font-size: 13px; font-weight: 600; }
+.news-angle { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; padding: 2px 7px; border-radius: 10px; }
+.angle-left { background: #e8f2ec; color: #3d6b52; }
+.angle-centre { background: #e8eef8; color: #3d5a8a; }
+.angle-right { background: #f8ede8; color: #8b4e2f; }
+.angle-neutral { background: var(--tag-bg); color: var(--text-muted); }
+.angle-good { background: #f8f2e0; color: #8b6a1a; }
+.news-desc { font-size: 11.5px; color: var(--text-muted); line-height: 1.5; margin-bottom: 8px; }
+.news-link { font-size: 11px; color: var(--accent); text-decoration: none; }
+.news-link:hover { text-decoration: underline; }
+.news-region { font-size: 10px; color: var(--text-muted); margin-top: 5px; }
+
+/* GENRE GRID */
+.genre-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(255px, 1fr)); gap: 12px; }
+.genre-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 16px 18px; }
+.genre-header { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.genre-name { font-size: 10.5px; text-transform: uppercase; letter-spacing: 1.3px; font-weight: 600; }
+.rec-item { padding: 7px 0; border-bottom: 1px solid var(--border); }
+.rec-item:last-child { border-bottom: none; padding-bottom: 0; }
+.rec-title { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+.rec-title a { color: var(--text); text-decoration: none; }
+.rec-title a:hover { color: var(--accent); }
+.rec-meta { font-size: 11px; color: var(--text-muted); display: flex; gap: 5px; align-items: center; }
+
+/* CINEMA */
+.mood-section { margin-bottom: 20px; }
+.mood-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.mood-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; }
+.film-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(185px, 1fr)); gap: 10px; }
+.film-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px 15px; }
+.film-title { font-family: Georgia, serif; font-size: 13.5px; font-weight: normal; margin-bottom: 3px; line-height: 1.3; }
+.film-dir { font-size: 11px; color: var(--text-muted); margin-bottom: 7px; }
+.film-why { font-size: 11.5px; color: var(--text); line-height: 1.5; }
+
+/* BOOKS */
+.book-section { margin-bottom: 20px; }
+.book-section-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+.book-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(185px, 1fr)); gap: 10px; }
+
+/* MUSIC */
+.music-curators { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-bottom: 20px; }
+.curator-chip { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+.curator-name-m { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+.curator-desc-m { font-size: 11.5px; color: var(--text-muted); line-height: 1.5; margin-bottom: 8px; }
+.curator-link { font-size: 11.5px; color: var(--accent); text-decoration: none; }
+.curator-link:hover { text-decoration: underline; }
+
+.pathway-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(255px, 1fr)); gap: 12px; }
+.pathway-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 16px 18px; }
+.pathway-genre { font-size: 10.5px; text-transform: uppercase; letter-spacing: 1.3px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.music-entry { padding: 7px 0; border-bottom: 1px solid var(--border); }
+.music-entry:last-child { border-bottom: none; padding-bottom: 0; }
+.music-title { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+.music-artist { font-size: 11px; color: var(--text-muted); margin-bottom: 3px; }
+.music-why { font-size: 11.5px; color: var(--text); line-height: 1.45; }
+
+/* CURATORS FULL */
+.curator-full-list { display: flex; flex-direction: column; gap: 8px; }
+.curator-full-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.curator-n { font-weight: 600; font-size: 13px; margin-bottom: 3px; }
+.curator-d { font-size: 12px; color: var(--text-muted); line-height: 1.5; max-width: 480px; }
+.curator-t { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 7px; }
+.curator-ext { font-size: 11px; color: var(--accent); text-decoration: none; white-space: nowrap; }
+.curator-ext:hover { text-decoration: underline; }
+
+.section-note { background: var(--tag-bg); border-radius: 6px; padding: 10px 14px; font-size: 12px; color: var(--text-muted); margin-bottom: 14px; line-height: 1.5; }
+.notion-banner { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.notion-banner-text strong { color: var(--text); font-size: 13px; display: block; margin-bottom: 2px; }
+.notion-banner-text { font-size: 12px; color: var(--text-muted); }
+
+/* ARTICLES */
+.article-filters { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+.af-btn { padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border); background: none; font-size: 11.5px; color: var(--text-muted); cursor: pointer; font-family: inherit; transition: all 0.15s; }
+.af-btn:hover { background: var(--bg-hover); color: var(--text); }
+.af-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+.article-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(255px, 1fr)); gap: 12px; }
+.article-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 15px 17px; display: flex; flex-direction: column; gap: 6px; }
+.article-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.article-cat { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.9px; padding: 2px 7px; border-radius: 10px; white-space: nowrap; }
+.article-time { font-size: 10px; color: var(--text-muted); white-space: nowrap; margin-top: 2px; }
+.article-title { font-family: Georgia, serif; font-size: 13.5px; font-weight: normal; line-height: 1.35; color: var(--text); }
+.article-author { font-size: 11px; color: var(--text-muted); }
+.article-desc { font-size: 11.5px; color: var(--text-muted); line-height: 1.5; }
+.article-link { font-size: 11.5px; color: var(--accent); text-decoration: none; margin-top: auto; padding-top: 4px; }
+.article-link:hover { text-decoration: underline; }
+.cat-power    { background: #f8ede8; color: #8b4e2f; }
+.cat-history  { background: #f2e8e8; color: #7a3a3a; }
+.cat-phil     { background: #ede8f5; color: #6b4a8a; }
+.cat-ideas    { background: #e8eef8; color: #3d5a8a; }
+.cat-culture  { background: #e8f2ec; color: #3d6b52; }
+.cat-film     { background: #f5f0e8; color: #7a5a30; }
+.cat-geo      { background: #e8f0f5; color: #2a5a7a; }
+.cat-india    { background: #f8f0e0; color: #8b6a1a; }
+.cat-nature   { background: #eaf2e8; color: #3a6a3a; }
+.cat-religion { background: #f5e8d0; color: #7a5010; }
+
+/* STYLE TAB */
+.style-curators { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; margin-bottom: 22px; }
+.style-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+.style-card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 5px; }
+.style-name { font-size: 13px; font-weight: 600; }
+.style-angle { font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; padding: 2px 7px; border-radius: 10px; white-space: nowrap; }
+.sa-foundation { background: #e8eef8; color: #3d5a8a; }
+.sa-street     { background: #e8f2ec; color: #3d6b52; }
+.sa-outdoor    { background: #eaf2e8; color: #3a6a3a; }
+.sa-luxury     { background: #f8f0e0; color: #8b6a1a; }
+.sa-south-asian { background: #f8ede8; color: #8b4e2f; }
+.style-desc { font-size: 11.5px; color: var(--text-muted); line-height: 1.5; margin-bottom: 8px; }
+.style-link { font-size: 11px; color: var(--accent); text-decoration: none; }
+.style-link:hover { text-decoration: underline; }
+
+.principle-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-bottom: 22px; }
+.principle-card { background: linear-gradient(135deg, #f8f4ee, #ece7dd); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+.principle-num { font-size: 20px; font-family: Georgia, serif; color: var(--accent); opacity: 0.5; margin-bottom: 4px; }
+.principle-title { font-size: 12.5px; font-weight: 600; margin-bottom: 4px; }
+.principle-desc { font-size: 11.5px; color: var(--text-muted); line-height: 1.5; }
+
+/* STYLE ARTICLES */
+.scat-craft    { background: #e8f2ec; color: #3d6b52; }
+.scat-culture  { background: #f5f0e8; color: #7a5a30; }
+.scat-identity { background: #ede8f5; color: #6b4a8a; }
+.scat-reading  { background: #f8f0e0; color: #8b6a1a; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="h-title">Conscious Media</div>
+    <div class="h-sub">Debu's reading, watching & listening room</div>
+  </div>
+  <div class="h-date">
+    <strong id="dayName"></strong>
+    <span id="fullDate"></span>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('today',this)">Today</button>
+  <button class="tab" onclick="switchTab('genres',this)">Genres</button>
+  <button class="tab" onclick="switchTab('cinema',this)">Cinema</button>
+  <button class="tab" onclick="switchTab('books',this)">Books</button>
+  <button class="tab" onclick="switchTab('music',this)">Music</button>
+  <button class="tab" onclick="switchTab('news',this)">News</button>
+  <button class="tab" onclick="switchTab('newsletters',this)">Newsletters</button>
+  <button class="tab" onclick="switchTab('articles',this)">Articles</button>
+  <button class="tab" onclick="switchTab('style',this)">Style</button>
+  <button class="tab" onclick="switchTab('curators',this)">Curators</button>
+</div>
+
+<div class="content">
+
+  <!-- TODAY -->
+  <div class="panel active" id="panel-today">
+    <div id="static-pick"></div>
+    <div class="ai-card" style="margin-top:14px;">
+      <div class="eyebrow green">✦ Fresh from Claude — new each session</div>
+      <div id="ai-body">Finding something worth your time today...</div>
+    </div>
+  </div>
+
+  <!-- GENRES -->
+  <div class="panel" id="panel-genres">
+    <div class="genre-grid" id="genreGrid"></div>
+  </div>
+
+  <!-- CINEMA -->
+  <!-- NEWSLETTERS (added 2026-07-09, synced from batbond18 inbox audit) -->
+  <div class="panel" id="panel-newsletters">
+    <div class="section-note">Your live subscriptions, landing in batbond18. The inbox is the feed — this tab is the map. Claude re-audits and refreshes the pick whenever we sync dashboards.</div>
+    <div style="background:rgba(128,128,128,.07); border:1px solid rgba(128,128,128,.25); border-radius:12px; padding:12px 14px; margin-bottom:14px;">
+      <div class="eyebrow green">✦ This week from your subscriptions</div>
+      <div style="margin-top:6px; font-size:14px; line-height:1.5;"><b>Hidden Jam — “7 ways to feel alive again (I tested them all)”</b> (Jul 6). Your four new heavyweights — Import AI, Lawfare, The Algorithm, Rest of World — were subscribed Jul 9; first real issues land within the week. Import AI on Mondays is the one to read before writing Statecraft.</div>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:12px;">
+      <div style="border:1px solid rgba(128,128,128,.25); border-radius:12px; padding:12px 14px;"><b>Import AI</b> · Jack Clark<div style="font-size:12.5px; opacity:.75; margin:4px 0;">Frontier AI capability + policy analysis from an Anthropic co-founder. The highest-signal AI-governance read you now get. Weekly (Mon).</div><a href="https://importai.substack.com" target="_blank" style="font-size:12.5px;">importai.substack.com</a></div>
+      <div style="border:1px solid rgba(128,128,128,.25); border-radius:12px; padding:12px 14px;"><b>Lawfare</b><div style="font-size:12.5px; opacity:.75; margin:4px 0;">National security × law × technology. High frequency — skim subjects, read one deep per week.</div><a href="https://www.lawfaremedia.org" target="_blank" style="font-size:12.5px;">lawfaremedia.org</a></div>
+      <div style="border:1px solid rgba(128,128,128,.25); border-radius:12px; padding:12px 14px;"><b>The Algorithm</b> · MIT Technology Review<div style="font-size:12.5px; opacity:.75; margin:4px 0;">AI news with a policy-and-society lens. Weekly.</div><a href="https://www.technologyreview.com" target="_blank" style="font-size:12.5px;">technologyreview.com</a></div>
+      <div style="border:1px solid rgba(128,128,128,.25); border-radius:12px; padding:12px 14px;"><b>Rest of World</b><div style="font-size:12.5px; opacity:.75; margin:4px 0;">Technology outside the West — your beat, professionally reported. Weekly digest.</div><a href="https://restofworld.org" target="_blank" style="font-size:12.5px;">restofworld.org</a></div>
+      <div style="border:1px solid rgba(128,128,128,.25); border-radius:12px; padding:12px 14px;"><b>Hidden Jam</b> · Kris<div style="font-size:12.5px; opacity:.75; margin:4px 0;">Unconventional ways to live and work. The Wonderings-adjacent read. ~Weekly.</div><a href="https://hiddenjamco.substack.com" target="_blank" style="font-size:12.5px;">hiddenjamco.substack.com</a></div>
+      <div style="border:1px solid rgba(128,128,128,.25); border-radius:12px; padding:12px 14px;"><b>The Attachment Project</b><div style="font-size:12.5px; opacity:.75; margin:4px 0;">Attachment psychology — the better-self shelf. ~Weekly. (Thinks your name is Bruce.)</div><a href="https://www.attachmentproject.com" target="_blank" style="font-size:12.5px;">attachmentproject.com</a></div>
+    </div>
+    <div class="section-note" style="margin-top:14px;">Reading protocol: read in the inbox or the Substack app (batbond18) — this tab makes newsletters a visible genre in the diet instead of an invisible side-channel. When an issue is worth keeping, tell Claude “log it” and it joins the Notion list.</div>
+  </div>
+
+  <div class="panel" id="panel-cinema">
+    <div class="section-note">Organised by what you're in the mood to feel, not just what to watch. Every film here earns its place.</div>
+    <div id="cinemaContent"></div>
+  </div>
+
+  <!-- BOOKS -->
+  <div class="panel" id="panel-books">
+    <div class="section-note">Books as companions, not tasks. Pick one up when it calls you.</div>
+    <div id="booksContent"></div>
+  </div>
+
+  <!-- MUSIC -->
+  <div class="panel" id="panel-music">
+    <div class="eyebrow" style="margin-bottom:12px;">Your Curators</div>
+    <div class="music-curators" id="musicCurators"></div>
+    <div class="eyebrow" style="margin-bottom:12px; margin-top:4px;">Listening Pathways</div>
+    <div class="section-note">Developing a wide music taste means going deep in multiple directions. These are starting points, not endpoints.</div>
+    <div class="pathway-grid" id="pathwayGrid"></div>
+  </div>
+
+  <!-- NEWS -->
+  <div class="panel" id="panel-news">
+    <div class="section-note">Read both sides on everything. Form your own view after hearing the best case each angle can make. The good news section isn't soft — it's necessary.</div>
+    <div id="newsContent"></div>
+  </div>
+
+  <!-- ARTICLES -->
+  <div class="panel" id="panel-articles">
+    <div class="section-note">Named articles — specific, linkable, readable on your phone in a spare 10–40 minutes. Filter by what you're in the mood to think about.</div>
+    <div class="article-filters" id="articleFilters"></div>
+    <div class="article-grid" id="articleGrid"></div>
+  </div>
+
+  <!-- STYLE -->
+  <div class="panel" id="panel-style">
+    <div class="pick-card" style="margin-bottom:18px;">
+      <div class="eyebrow">The Sherlock Principle</div>
+      <div class="pick-title" style="font-size:16px;">Style as observational intelligence</div>
+      <div class="pick-body" style="margin-bottom:0;">
+        Sherlock Holmes didn't study fashion. He understood that <em>everything a person wears is a data point</em> — wear patterns, fabric quality, fit choices, shoe condition, accessory selections. Style is a language. Learning to dress well and learning to read how others dress are the same skill, developed together. The goal isn't to look good. It's to understand what "looking good" communicates, why it communicates it, and to speak that language with intention. Paul Willstout reads cities; you're learning to read people the same way.
+      </div>
+    </div>
+    <div class="eyebrow" style="margin-bottom:12px;">Your Curators</div>
+    <div class="style-curators" id="styleCurators"></div>
+    <div class="eyebrow" style="margin-bottom:12px;">Five Principles Before Anything Else</div>
+    <div class="principle-grid" id="stylePrinciples"></div>
+    <div class="eyebrow" style="margin-bottom:12px;">Read These</div>
+    <div class="genre-grid" id="styleBooks"></div>
+    <div class="eyebrow" style="margin-bottom:8px; margin-top:24px;">On-the-Go Reading — Style & Taste</div>
+    <div class="section-note" style="margin-bottom:14px;">Specific articles for building a philosophy of dressing. Read between meetings, on trains, in cafés.</div>
+    <div class="article-filters" id="styleArticleFilters"></div>
+    <div class="article-grid" id="styleArticleGrid"></div>
+  </div>
+
+  <!-- CURATORS -->
+  <div class="panel" id="panel-curators">
+    <div class="notion-banner">
+      <div class="notion-banner-text">
+        <strong>Notion Media List connected</strong>
+        Log what you consume — tell Claude "I just finished X" and it gets added.
+      </div>
+      <a href="https://app.notion.com/p/a625eb3128f4411b9842073ec6bebede" target="_blank" class="btn btn-ghost" style="font-size:12px;padding:6px 14px;flex-shrink:0;">Open in Notion →</a>
+    </div>
+    <div class="curator-full-list" id="curatorFull"></div>
+  </div>
+
+</div>
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────────────────
+
+const GENRES = [
+  { name:"Systems Thinking", color:"#4a7c59", recs:[
+    { title:"Thinking in Systems", author:"Donella Meadows", type:"Book", url:null },
+    { title:"Complexity", author:"Quanta Magazine", type:"Articles", url:"https://www.quantamagazine.org/tag/complexity/" },
+    { title:"Mindscape Podcast", author:"Sean Carroll", type:"Podcast", url:"https://www.preposterousuniverse.com/podcast/" },
+  ]},
+  { name:"Intellectual History", color:"#3d5a8a", recs:[
+    { title:"The Structure of Scientific Revolutions", author:"Thomas Kuhn", type:"Book", url:null },
+    { title:"Horizontal History", author:"Wait But Why", type:"Essay", url:"https://waitbutwhy.com/2016/01/horizontal-history.html" },
+    { title:"Dwarkesh × Tyler Cowen", author:"Dwarkesh Podcast", type:"Podcast", url:"https://www.dwarkeshpatel.com" },
+  ]},
+  { name:"Philosophy — Political & Social", color:"#8b5e3c", recs:[
+    { title:"The Republic", author:"Plato", type:"Text", url:null },
+    { title:"The Prince", author:"Niccolò Machiavelli", type:"Text", url:"https://www.gutenberg.org/ebooks/1232" },
+    { title:"The 48 Laws of Power", author:"Robert Greene", type:"Book", url:null },
+    { title:"The Communist Manifesto", author:"Marx & Engels", type:"Text", url:"https://www.marxists.org/archive/marx/works/1848/communist-manifesto/" },
+    { title:"History of the Peloponnesian War", author:"Thucydides", type:"Text", url:null },
+    { title:"Arthashastra", author:"Kautilya", type:"Text", url:null },
+    { title:"The Origins of Totalitarianism", author:"Hannah Arendt", type:"Book", url:null },
+  ]},
+  { name:"Philosophy — Abstract & Speculative", color:"#7b4f8a", recs:[
+    { title:"What Is It Like to Be a Bat?", author:"Thomas Nagel", type:"Essay", url:"https://www.sas.upenn.edu/~cavitch/pdf-library/Nagel_Bat.pdf" },
+    { title:"Beyond Good and Evil", author:"Nietzsche", type:"Book", url:null },
+    { title:"Pursuit of Wonder", author:"YouTube", type:"Video", url:"https://youtube.com/@pursuitofwonder" },
+  ]},
+  { name:"Eastern & Contemplative Philosophy", color:"#b8720a", recs:[
+    { title:"The Gospel of Sri Ramakrishna", author:"Mahendranath Gupta", type:"Book", url:null },
+    { title:"I Am That", author:"Nisargadatta Maharaj", type:"Book", url:null },
+    { title:"In Search of the Miraculous", author:"P.D. Ouspensky on Gurdjieff", type:"Book", url:null },
+    { title:"K Foundation — Krishnamurti", author:"YouTube", type:"Video", url:"https://youtube.com/@kfoundation" },
+  ]},
+  { name:"History — Full Spectrum", color:"#7a3a3a", recs:[
+    { title:"The Anarchy", author:"William Dalrymple", type:"Book", url:null },
+    { title:"Late Victorian Holocausts", author:"Mike Davis", type:"Book", url:null },
+    { title:"Blueprint for Armageddon", author:"Dan Carlin's Hardcore History", type:"Podcast", url:"https://www.dancarlin.com/hardcore-history-series/" },
+  ]},
+  { name:"Narrative Nonfiction", color:"#7a6040", recs:[
+    { title:"ProPublica — Longform", author:"ProPublica", type:"Publication", url:"https://www.propublica.org" },
+    { title:"The Atlantic — Features", author:"The Atlantic", type:"Publication", url:"https://www.theatlantic.com" },
+    { title:"Delayed Gratification", author:"Slow Journalism Co.", type:"Magazine", url:"https://www.slow-journalism.com" },
+  ]},
+  { name:"Cross-Disciplinary Science", color:"#3d7a7a", recs:[
+    { title:"Quanta Magazine", author:"Various", type:"Publication", url:"https://www.quantamagazine.org" },
+    { title:"The Fermi Paradox", author:"Wait But Why", type:"Essay", url:"https://waitbutwhy.com/2014/05/fermi-paradox.html" },
+    { title:"Big Think", author:"YouTube", type:"Video", url:"https://youtube.com/@bigthink" },
+  ]},
+  { name:"Political Economy & Institutions", color:"#5a6a3d", recs:[
+    { title:"Why Nations Fail", author:"Acemoglu & Robinson", type:"Book", url:null },
+    { title:"Foreign Affairs", author:"CFR", type:"Publication", url:"https://www.foreignaffairs.com" },
+    { title:"Inglorious Empire", author:"Shashi Tharoor", type:"Book", url:null },
+  ]},
+  { name:"Aesthetic & Cultural Criticism", color:"#8a4a4a", recs:[
+    { title:"Great Movies Series", author:"Roger Ebert", type:"Essays", url:"https://www.rogerebert.com/great-movies" },
+    { title:"Criterion Collection — Current", author:"Various", type:"Essays", url:"https://www.criterion.com/current" },
+    { title:"Aperture Thinking", author:"YouTube", type:"Video", url:"https://youtube.com/@aperturethinking" },
+  ]},
+  { name:"Contrarian & Heterodox", color:"#6a5a3d", recs:[
+    { title:"Astral Codex Ten", author:"Scott Alexander", type:"Blog", url:"https://www.astralcodexten.com" },
+    { title:"Manufacturing Consent", author:"Chomsky & Herman", type:"Book", url:null },
+    { title:"The Elephant in the Brain", author:"Simler & Hanson", type:"Book", url:null },
+  ]},
+  { name:"Observation & Human Nature", color:"#5a4a6a", recs:[
+    { title:"What Every Body Is Saying", author:"Joe Navarro (ex-FBI)", type:"Book", url:null },
+    { title:"The Complete Sherlock Holmes", author:"Arthur Conan Doyle", type:"Book", url:"https://www.gutenberg.org/ebooks/1661" },
+    { title:"Connections", author:"James Burke (BBC)", type:"Series", url:"https://www.youtube.com/results?search_query=james+burke+connections+bbc" },
+  ]},
+  { name:"Lives Well Lived", color:"#2a6b7a", recs:[
+    { title:"Parts Unknown", author:"Anthony Bourdain", type:"Series", url:null },
+    { title:"Chef's Table", author:"Netflix", type:"Series", url:null },
+    { title:"In Patagonia", author:"Bruce Chatwin", type:"Book", url:null },
+  ]},
+  { name:"Humans & Nature", color:"#3d6b3d", recs:[
+    { title:"Braiding Sweetgrass", author:"Robin Wall Kimmerer", type:"Book", url:null },
+    { title:"The Sixth Extinction", author:"Elizabeth Kolbert", type:"Book", url:null },
+    { title:"A Sand County Almanac", author:"Aldo Leopold", type:"Book", url:null },
+  ]},
+];
+
+const CINEMA = [
+  { mood:"Joy & Wonder", color:"#4a7c59", films:[
+    { title:"Cinema Paradiso", dir:"Tornatore, 1988", why:"Love, nostalgia, and cinema itself. Will make you feel things you forgot you had." },
+    { title:"Spirited Away", dir:"Miyazaki, 2001", why:"The most wondrous film ever made. Childhood, identity, the spirit world." },
+    { title:"The Grand Budapest Hotel", dir:"Wes Anderson, 2014", why:"A fable about elegance, friendship, and a world disappearing. Anderson's most purely joyful film — all craft and feeling." },
+    { title:"Amélie", dir:"Jeunet, 2001", why:"Pure cinematic joy. A woman who arranges happiness for others, neglecting her own." },
+  ]},
+  { mood:"Love & Loss", color:"#7b4f8a", films:[
+    { title:"In the Mood for Love", dir:"Wong Kar-wai, 2000 (HK)", why:"Two neighbours suspect their spouses are having an affair. Nothing is said directly. Everything is felt. The most beautiful film about unexpressed love ever made — Wong Kar-wai's absolute masterpiece." },
+    { title:"Eternal Sunshine of the Spotless Mind", dir:"Gondry, 2004", why:"What would you keep if you could erase someone? Memory as the shape of love." },
+    { title:"Before Sunrise / Sunset / Midnight", dir:"Linklater, 1995–2013", why:"Watch all three. Two people talk across 18 years. The truest romance ever filmed." },
+    { title:"Lost in Translation", dir:"Coppola, 2003", why:"Loneliness as connection. Tokyo as a character. Quietly devastating." },
+    { title:"Lost and Found", dir:"Lee Chi-Ngai, 1996 (HK)", why:"A woman with leukemia, a missing sailor, a man who finds lost things. Hong Kong cinema at its most achingly humane — on timing, longing, and the people who pass through your life before you understand what they meant." },
+  ]},
+  { mood:"Desire & Becoming", color:"#6a3d6a", films:[
+    { title:"The Worst Person in the World", dir:"Joachim Trier, 2021 (Norway)", why:"Julie can't decide who she is or who she loves, and the film refuses to judge her for it. The most honest portrait of being young and adrift in the 21st century. Renate Reinsve won Cannes Best Actress — deservedly." },
+    { title:"Song to Song", dir:"Terrence Malick, 2017", why:"Malick's fragmented fever dream of desire, music, and Austin TX. Less a story than a texture — pure impressionism. Watch it the way you'd listen to an album, not follow a plot." },
+    { title:"Moonlight Whispers", dir:"Akihiko Shiota, 1999 (Japan)", why:"Two teenagers, desire, power, humiliation — told without judgment or sensationalism. Japanese cinema's quiet transgressive tradition at its most unsettling and intimate. Not a film you forget." },
+  ]},
+  { mood:"Honor & Loyalty", color:"#5a6a3d", films:[
+    { title:"A Prophet", dir:"Audiard, 2009 (France)", why:"A young Arab man enters a French prison with nothing and exits as a power. The most rigorous film about how loyalty, intelligence, and ruthlessness combine into something like destiny." },
+    { title:"Heat", dir:"Mann, 1995", why:"Two men on opposite sides of the law, identical in devotion. The coffee scene alone." },
+    { title:"Ikiru", dir:"Kurosawa, 1952", why:"A bureaucrat decides to do one meaningful thing before he dies." },
+    { title:"12 Angry Men", dir:"Lumet, 1957", why:"One room. Twelve men. A masterclass in how minds actually change." },
+  ]},
+  { mood:"Obsession & Craft", color:"#3d5a8a", films:[
+    { title:"Fitzcarraldo", dir:"Herzog, 1982", why:"A man tries to drag a steamship over a mountain in the Amazon to build an opera house. Werner Herzog made this film the same way his character pursues his dream — through deranged, magnificent will." },
+    { title:"Amadeus", dir:"Forman, 1984", why:"Genius witnessed through the eyes of mediocrity. On talent, envy, and God." },
+    { title:"Network", dir:"Lumet, 1976", why:"Media, madness, and the machinery of spectacle. More prescient every year." },
+    { title:"2001: A Space Odyssey", dir:"Kubrick, 1968", why:"Pure visual philosophy. No explanation given — you must think." },
+  ]},
+  { mood:"Adventure & Freedom", color:"#2a6b7a", films:[
+    { title:"Into the Wild", dir:"Penn, 2007", why:"A young man walks away from everything. Read Krakauer's book too — the critique matters." },
+    { title:"The Motorcycle Diaries", dir:"Salles, 2004", why:"How a person becomes what they become. Guevara's formative journey across South America." },
+    { title:"Y Tu Mamá También", dir:"Cuarón, 2001", why:"Two boys and a woman drive through Mexico. Youth, class, desire, and death." },
+    { title:"Tampopo", dir:"Juzo Itami, 1985 (Japan)", why:"A truck driver helps a widow perfect her ramen. A road movie, a comedy, a meditation on food and desire. Completely its own thing — nothing else like it in world cinema." },
+  ]},
+  { mood:"Pain & Suffering", color:"#8a4a4a", films:[
+    { title:"Bicycle Thieves", dir:"De Sica, 1948", why:"A man and his son search Rome for a stolen bike. Devastation through simplicity." },
+    { title:"Pather Panchali", dir:"Satyajit Ray, 1955", why:"India's greatest film. Poverty, beauty, and the passage of childhood." },
+    { title:"Schindler's List", dir:"Spielberg, 1993", why:"The Holocaust through one man's moral awakening. Required, permanent viewing." },
+    { title:"Melancholia", dir:"von Trier, 2011", why:"Depression rendered as the end of the world. Strangely, unbearably beautiful." },
+  ]},
+  { mood:"Power & History", color:"#7a3a3a", films:[
+    { title:"Apocalypse Now", dir:"Coppola, 1979", why:"War, madness, and the heart of darkness. Vietnam as mythological descent." },
+    { title:"The Battle of Algiers", dir:"Pontecorvo, 1966", why:"Colonial resistance shot like documentary. The US Army screened it before invading Iraq." },
+    { title:"The Act of Killing", dir:"Oppenheimer, 2012", why:"Indonesian death squad leaders re-enact their crimes. Unmissable and disturbing." },
+    { title:"There Will Be Blood", dir:"PTA, 2007", why:"Capitalism, religion, and madness in early 20th century California. Daniel Day-Lewis gives the greatest screen performance of the last 30 years. On what men worship when they don't worship God." },
+  ]},
+  { mood:"Dark Wit & Intelligence", color:"#6a5a3d", films:[
+    { title:"Parasite", dir:"Bong Joon-ho, 2019", why:"Class warfare as dark comedy, then something else entirely." },
+    { title:"Blow-Up", dir:"Antonioni, 1966", why:"Swinging London, a photographer, a possible murder. Reality slips away stylishly." },
+    { title:"Watching the Detectives", dir:"Sheridan, 2007", why:"Indie charm. A film nerd meets someone who refuses to be categorised." },
+  ]},
+  { mood:"Contemplation & Silence", color:"#7a6040", films:[
+    { title:"Stalker", dir:"Tarkovsky, 1979", why:"Slow, hypnotic meditation on desire, faith, and the unknowable." },
+    { title:"Tokyo Story", dir:"Ozu, 1953", why:"Nothing happens. Everything is said. Time and family." },
+    { title:"The Seventh Seal", dir:"Bergman, 1957", why:"A knight plays chess with Death. On meaning and belief." },
+    { title:"A Separation", dir:"Farhadi, 2011", why:"Moral complexity without a villain. Iran through a keyhole." },
+  ]},
+];
+
+const BOOKS = [
+  { section:"Eastern & Mystical Philosophy", color:"#b8720a", books:[
+    { title:"The Gospel of Sri Ramakrishna", author:"Mahendranath Gupta (M)", why:"The most intimate record of a realised master's daily life — Ramakrishna in conversation, in trance, in laughter, across 1,000 pages. You know Vivekananda; this is his teacher, as recorded by a disciple who wrote down everything. The lineage begins here." },
+    { title:"Be Here Now", author:"Ram Dass", why:"Richard Alpert left Harvard, went to India, met Neem Karoli Baba, and came back a different person. Part memoir, part illustrated teaching, part practice manual — the most honest account of a Western encounter with Vedanta. The hand-lettered middle section is unlike any other book." },
+    { title:"The Upanishads", author:"trans. Eknath Easwaran", why:"The source texts for everything Yogananda, Sri M, and Swami Rama were transmitting. Read the Isha, Kena, Katha, and Mandukya — four short texts that contain the entire philosophical structure of Vedanta. These are the roots. Easwaran's translations read like poetry." },
+    { title:"I Am That", author:"Nisargadatta Maharaj", why:"Conversations with a Mumbai bidi-seller who happened to be enlightened. Shattering." },
+    { title:"Bhagavad Gita", author:"trans. Eknath Easwaran", why:"Start with Easwaran's translation. Distilled essence of dharma, action, and identity." },
+    { title:"In Search of the Miraculous", author:"P.D. Ouspensky", why:"Ouspensky's systematic account of Gurdjieff's Fourth Way teaching. The most rigorous presentation of a genuinely strange and transformative philosophy — on waking up, consciousness, and what it means to 'be'." },
+    { title:"Meetings with Remarkable Men", author:"G.I. Gurdjieff", why:"Gurdjieff's own memoir of his search across Central Asia and the East for hidden wisdom. Part adventure story, part teaching, part deliberate myth. Unlike anything else." },
+  ]},
+  { section:"History", color:"#7a3a3a", books:[
+    { title:"The Anarchy", author:"William Dalrymple", why:"How a trading company conquered India. Essential reading for any Indian." },
+    { title:"Late Victorian Holocausts", author:"Mike Davis", why:"British-induced famines killed 30–60 million. The most important book on colonialism." },
+    { title:"Bloodlands", author:"Timothy Snyder", why:"Eastern Europe between Hitler and Stalin. 14 million civilians killed in a decade." },
+    { title:"The Silk Roads", author:"Peter Frankopan", why:"World history recentred on the East. Rewires your mental map of civilisation." },
+    { title:"If This Is a Man", author:"Primo Levi", why:"The Holocaust from inside it. The most precise, humane account ever written." },
+    { title:"India After Gandhi", author:"Ramachandra Guha", why:"The definitive history of independent India. Your country, in full." },
+    { title:"History of the Peloponnesian War", author:"Thucydides", why:"The first work of realist IR theory, written 2,400 years ago. 'The strong do what they can; the weak suffer what they must.' Every IR class starts here — read the original, not the summary." },
+    { title:"Five Bullets", author:"Elliot Williams", why:"The 1984 NYC subway vigilante shooting that divided the nation — told through Bernie Goetz, Al Sharpton, Giuliani, the NRA, and Rupert Murdoch. A forensic account of how one moment crystallises an entire social moment." },
+  ]},
+  { section:"Humans & Nature", color:"#3d6b3d", books:[
+    { title:"Braiding Sweetgrass", author:"Robin Wall Kimmerer", why:"Potawatomi plant knowledge meets botany. One of the most beautiful books written." },
+    { title:"The Sixth Extinction", author:"Elizabeth Kolbert", why:"We're living through a mass extinction. The clearest account of what that means." },
+    { title:"A Sand County Almanac", author:"Aldo Leopold", why:"The philosophical foundation of land ethics. Written in 1949. Still unmatched." },
+    { title:"The Uninhabitable Earth", author:"David Wallace-Wells", why:"What climate change actually means for how we live. Urgent and specific." },
+  ]},
+  { section:"Lives Well Lived", color:"#2a6b7a", books:[
+    { title:"Into the Wild", author:"Jon Krakauer", why:"Read alongside the film. Krakauer's critique adds the dimension Penn leaves out." },
+    { title:"In Patagonia", author:"Bruce Chatwin", why:"Travel writing that reads like myth. The template for literary adventure." },
+    { title:"Kitchen Confidential", author:"Anthony Bourdain", why:"The book that made Bourdain. Raw, funny, and completely alive." },
+    { title:"The Creative Act: A Way of Being", author:"Rick Rubin", why:"Rubin produced more defining albums than anyone alive. This is his philosophy of how anything gets made — listening, attention, the willingness to be surprised. Not about music. About how to live inside your work." },
+  ]},
+  { section:"Philosophy & Ideas", color:"#7b4f8a", books:[
+    { title:"The Prince", author:"Niccolò Machiavelli", why:"Power stripped of all illusion. The most honest book ever written about how rulers actually behave. Read alongside Kautilya's Arthashastra — 2,000 years apart, same conclusions." },
+    { title:"Antifragile", author:"Nassim Nicholas Taleb", why:"Some things break under stress. Some survive. Antifragile things get stronger. Taleb's framework for thinking about risk, randomness, and how to build a life that improves from disorder." },
+    { title:"The Lucifer Effect", author:"Philip Zimbardo", why:"The Stanford Prison Experiment psychologist's full account of how ordinary people become capable of evil. Read alongside Arendt's 'banality of evil' — together they are the most important framework for understanding atrocity." },
+    { title:"Gödel, Escher, Bach", author:"Douglas Hofstadter", why:"Self-reference, consciousness, and beauty across math, music, and art." },
+    { title:"The Brothers Karamazov", author:"Dostoevsky", why:"God, doubt, freedom, love. The richest novel ever written." },
+    { title:"Why Nations Fail", author:"Acemoglu & Robinson", why:"Institutions explain everything. A framework you'll use for the rest of your life." },
+    { title:"The Remains of the Day", author:"Kazuo Ishiguro", why:"Regret told so quietly it breaks you." },
+    { title:"Meditations", author:"Marcus Aurelius", why:"A Roman emperor's private journal — never meant to be published. Written in Greek as self-discipline exercises at the edge of battle. Not about thinking clearly but about acting rightly under pressure. The Stoic text above all others. Start at Book 2." },
+    { title:"Letters from a Stoic", author:"Seneca", why:"Nero's advisor — a man who knew power from the inside and wrote philosophy from within it. His letters are the most readable Stoic texts: short, direct, urgent. Start with Letter 1 on the value of time." },
+    { title:"Enchiridion", author:"Epictetus", why:"A slave who became the most influential Stoic teacher. His handbook is 40 pages — one sitting. The core argument: some things are in your control, some are not. Everything in Stoicism follows from knowing the difference." },
+  ]},
+  { section:"Observation & Reading People", color:"#5a4a6a", books:[
+    { title:"What Every Body Is Saying", author:"Joe Navarro", why:"Navarro spent 25 years reading people for the FBI. This is his method for decoding body language — the gestures, postures, and micro-expressions that people can't control. The practical complement to Greene's Laws of Human Nature." },
+    { title:"The Complete Sherlock Holmes", author:"Arthur Conan Doyle", why:"Don't study Sherlock — read him. Watch how Doyle constructs the observations, what Holmes notices first, why it matters. The stories are the training manual. Free on Gutenberg." },
+    { title:"Blink", author:"Malcolm Gladwell", why:"On thin-slicing — the unconscious rapid cognition that experts use to make accurate judgments in seconds. Teaches you to trust refined intuition without being able to explain it. Controversial but useful." },
+    { title:"The Art of Looking Sideways", author:"Alan Fletcher", why:"A designer's compendium of how visual intelligence works — how the eye notices, how the mind makes connections, how creativity is really a form of observation. Dip into it rather than reading cover to cover." },
+  ]},
+  { section:"Literature & Dark Fiction", color:"#4a3a5a", books:[
+    { title:"The King in Yellow", author:"Robert W. Chambers", why:"1895 stories connected by a fictional forbidden play that drives readers mad. The original cosmic horror — Lovecraft credited Chambers directly. The first two stories ('The Repairer of Reputations', 'The Mask') are among the strangest and most beautiful things in American literature." },
+    { title:"Notes from Underground", author:"Fyodor Dostoevsky", why:"The first anti-hero in literature. A bitter, brilliant man argues with an imaginary audience about free will, suffering, and the impossibility of being good. The template for every unreliable narrator that followed." },
+    { title:"The Stranger", author:"Albert Camus", why:"A man kills someone in the Algerian sun and feels nothing. Absurdism in 123 pages. Read it in one sitting." },
+  ]},
+  { section:"Political Theory — The Canon", color:"#8b5e3c", books:[
+    { title:"The 48 Laws of Power", author:"Robert Greene", why:"Greene synthesised 3,000 years of power — Machiavelli, Sun Tzu, Clausewitz, historical court intrigue — into 48 observed laws. Not a manual for cynicism but a field guide to how power actually moves. Sit it next to Machiavelli and Kautilya; they're in conversation." },
+    { title:"The Laws of Human Nature", author:"Robert Greene", why:"Greene's most mature book. On reading people's hidden motivations, recognising the emotional forces that drive decisions, and understanding yourself clearly enough to lead others. Draws on Jungian psychology, Stoicism, and biographical case studies. Essential for IR and leadership." },
+    { title:"Mastery", author:"Robert Greene", why:"How the great masters — Darwin, Mozart, da Vinci, Coltrane — built their genius. Not talent but process: the apprenticeship phase, the creative breakthrough, the deep practice. Read alongside Rick Rubin's Creative Act; they're the same argument from different angles." },
+    { title:"The Communist Manifesto", author:"Karl Marx & Friedrich Engels", why:"The most influential political pamphlet ever written. Whether you agree or not, you cannot understand the last 175 years of history — revolutions, labour movements, Cold War, anti-colonialism — without knowing this argument from the source." },
+    { title:"Das Kapital — Volume 1, Part 1", author:"Karl Marx", why:"Don't read the whole thing — read Part 1 on commodities and Part 4 on alienated labour. Marx's analysis of how capitalism works at the level of the individual worker is still the most penetrating account we have." },
+    { title:"The Economic and Philosophical Manuscripts of 1844", author:"Karl Marx", why:"The young Marx, before the economics. On alienation — how industrial labour separates us from our work, from each other, from ourselves. The most human thing Marx ever wrote." },
+  ]},
+];
+
+const MUSIC_CURATORS = [
+  { name:"mindyossi", desc:"Eclectic, thoughtful music curation. Wide taste, editorial eye.", url:"https://www.instagram.com/mindyossi" },
+  { name:"assortedtapes", desc:"Tape-culture aesthetic. Alternative, indie, and the interesting edges of everything.", url:"https://www.instagram.com/assortedtapes" },
+  { name:"erikafreizz", desc:"Taste-forward discovery across genres and moods.", url:"https://www.instagram.com/erikafreizz" },
+  { name:"inrotation.daily", desc:"Daily rotation picks — a steady drip of music worth hearing.", url:"https://www.instagram.com/inrotation.daily" },
+  { name:"Frankie Statham", desc:"UK artist and music curator — slow mornings, jazz-adjacent picks, cosy indie. Good for building out the softer, more atmospheric side of your listening.", url:"https://www.instagram.com/frankiestathamuk" },
+];
+
+const MUSIC_PATHWAYS = [
+  { genre:"Jazz & Soul", color:"#3d5a8a", entries:[
+    { title:"Kind of Blue", artist:"Miles Davis", why:"The most perfect jazz album. Start here, always." },
+    { title:"A Love Supreme", artist:"John Coltrane", why:"Devotional jazz. Connects directly to your Eastern philosophy reading — this is worship in sound." },
+    { title:"Nina Simone at Carnegie Hall", artist:"Nina Simone", why:"Power, protest, and total mastery. A force of nature on stage." },
+  ]},
+  { genre:"Indian Classical", color:"#b8720a", entries:[
+    { title:"Raga Bhairavi", artist:"Hariprasad Chaurasia", why:"The farewell raga — always played last at a concert. Chaurasia's bansuri flute turns it into something deeply meditative and emotionally open. Your cultural inheritance, approached from the morning side." },
+    { title:"Qawwali", artist:"Nusrat Fateh Ali Khan", why:"Sufi devotional music at its most ecstatic. Crosses every border it encounters." },
+    { title:"Tabla works", artist:"Zakir Hussain", why:"The greatest tabla player alive. Rhythm as a philosophical system." },
+  ]},
+  { genre:"Ambient & Atmospheric", color:"#3d7a7a", entries:[
+    { title:"Music for Airports", artist:"Brian Eno", why:"Invented the genre. Perfect for reading, thinking, writing." },
+    { title:"Vespertine", artist:"Björk", why:"Intimate, strange, and beautiful. Sound as private interior world." },
+    { title:"async", artist:"Ryuichi Sakamoto", why:"A dying man's final album. Silence as much as sound. Deeply moving." },
+  ]},
+  { genre:"Singer-Songwriter", color:"#7a6040", entries:[
+    { title:"Blood on the Tracks", artist:"Bob Dylan", why:"The greatest breakup album. Also a lesson in how language actually works." },
+    { title:"Blue", artist:"Joni Mitchell", why:"Pure emotional intelligence set to music. Benchmark for vulnerability." },
+    { title:"For Emma, Forever Ago", artist:"Bon Iver", why:"Recorded alone in a cabin in winter. You can feel the isolation." },
+  ]},
+  { genre:"Alternative & Indie", color:"#6a5a3d", entries:[
+    { title:"OK Computer", artist:"Radiohead", why:"Alienation and technology in 1997. Sounds more prescient every year." },
+    { title:"Trouble Will Find Me", artist:"The National", why:"Middle-aged anxiety as beautiful rock. Grows with you over years." },
+    { title:"Illinois", artist:"Sufjan Stevens", why:"Orchestral folk that sounds like a place and a feeling at once." },
+  ]},
+  { genre:"Japanese Jazz & J-Jazz", color:"#6a3d6a", entries:[
+    { title:"Blow Up", artist:"Isao Suzuki, 1973", why:"Upright bass as the lead voice — rare in jazz-funk. Dark, heavy, and hypnotic. Suzuki was the anchor of the Tokyo scene; this is his defining statement. Completely different texture from Fukui or Inagaki." },
+    { title:"Scenery", artist:"Ryo Fukui, 1976", why:"The Japanese jazz album. A Sapporo pianist recorded this in one session — sparse, deep, and completely unhurried. As close to perfect as piano trio jazz gets outside of Bill Evans." },
+    { title:"Misty", artist:"Tsuyoshi Yamamoto Trio, 1974", why:"Piano trio at its most intimate — a live recording from the Misty bar in Sapporo, where Fukui would later record Scenery. Deeply lyrical and unhurried. The ideal next listen after Scenery." },
+    { title:"Mellow Dream", artist:"Ryo Fukui, 1977", why:"Fukui's follow-up to Scenery — slightly warmer, more lyrical. If Scenery is 3am, this is early morning. Listen to them as a pair." },
+  ]},
+  { genre:"Film Scores & Classical", color:"#8a4a4a", entries:[
+    { title:"The Mission", artist:"Ennio Morricone", why:"The most beautiful film score ever written. Listen alone, full volume." },
+    { title:"Late String Quartets", artist:"Beethoven", why:"Written when he was deaf. The most personal music in the Western canon." },
+    { title:"Merry Christmas Mr. Lawrence", artist:"Ryuichi Sakamoto", why:"Spare, melancholic, perfect. One of the great film scores." },
+  ]},
+];
+
+const ALL_CURATORS = [
+  { name:"Wait But Why", desc:"Tim Urban's long-form illustrated essays on big ideas — AI, procrastination, space, human nature. The gold standard for making complexity genuinely interesting.", url:"https://waitbutwhy.com", type:"Blog", tags:["Systems Thinking","Science","History"] },
+  { name:"Dwarkesh Patel Podcast", desc:"Deep 3–4 hour conversations with historians, economists, scientists, AI researchers. Rigorous, wide, and never shallow.", url:"https://www.dwarkeshpatel.com", type:"Podcast", tags:["Political Economy","History","Science"] },
+  { name:"Aperture Thinking", desc:"Philosophy and ideas with cinematic delivery. Thoughtful and well-produced.", url:"https://youtube.com/@aperturethinking", type:"YouTube", tags:["Philosophy","Ideas"] },
+  { name:"Big Think", desc:"Short expert talks across science, history, psychology, and society. Great entry point before going deep on a topic.", url:"https://youtube.com/@bigthink", type:"YouTube", tags:["Science","Society","History"] },
+  { name:"K Foundation (Krishnamurti)", desc:"J. Krishnamurti's teachings on consciousness, self-inquiry, and freedom from conditioning. The bridge between Vedanta and contemporary thought.", url:"https://youtube.com/@kfoundation", type:"YouTube", tags:["Eastern Philosophy","Contemplation"] },
+  { name:"Pursuit of Wonder", desc:"Contemplative philosophy and psychology rendered in a meditative, narrated style. Sits perfectly alongside Tarkovsky and Bergman.", url:"https://youtube.com/@pursuitofwonder", type:"YouTube", tags:["Philosophy","Psychology"] },
+  { name:"archived.dreams", desc:"Aesthetic, intellectually-curated Instagram — reading picks, film suggestions, ideas at the intersection of art and thought.", url:"https://www.instagram.com/archived.dreams", type:"Instagram", tags:["Aesthetic","Reading","Films"] },
+  { name:"Erin Meryl", desc:"Study and learning-focused writing that models serious intellectual engagement. A template for how to read with purpose.", url:"https://erinmerylstudy.com", type:"Blog", tags:["Learning","Intellectual History"] },
+  { name:"mindyossi", desc:"Eclectic music curation with a thoughtful editorial lens.", url:"https://www.instagram.com/mindyossi", type:"Instagram", tags:["Music"] },
+  { name:"assortedtapes", desc:"Tape-culture aesthetic. Alternative, indie, and the interesting edges of everything.", url:"https://www.instagram.com/assortedtapes", type:"Instagram", tags:["Music"] },
+  { name:"erikafreizz", desc:"Taste-forward music discovery across genres and moods.", url:"https://www.instagram.com/erikafreizz", type:"Instagram", tags:["Music"] },
+  { name:"inrotation.daily", desc:"Daily rotation picks — a steady drip of music worth hearing.", url:"https://www.instagram.com/inrotation.daily", type:"Instagram", tags:["Music"] },
+  { name:"Docs to Watch", desc:"Patrick Carnegy's documentary curation — 410K followers and more influence per post than BBC Arts or HBO Docs. If he recommends a film it moves 300K views. Essential if you're taking documentary seriously.", url:"https://www.instagram.com/docstowatch", type:"Instagram", tags:["Documentary","Film"] },
+  { name:"Metro Media House", desc:"Media and ideas from inside the content industry — posts on creative agency, writing, high-agency thinking, and what it takes to build in media. A lens on the craft side of communication.", url:"https://www.instagram.com/metromedia.house", type:"Instagram", tags:["Media","Creativity","Ideas"] },
+  { name:"Paul Will Stout", desc:"Urban design, landscape architecture, and city planning told through experience. Teaches you to read cities as texts — essential for someone thinking about leadership and the 21st century world.", url:"https://www.instagram.com/paulwillstout", type:"Instagram", tags:["Urban Design","Architecture","Cities"] },
+  { name:"tongvuetied", desc:"Personal essays on curiosity, wonder, and growing up — alongside sharp pop culture analysis. A quieter, more introspective voice that pairs well with heavier reading. Also has a Substack.", url:"https://www.instagram.com/tongvuetied", type:"Instagram", tags:["Essays","Culture","Reflection"] },
+  { name:"khaihastaste", desc:"Taste-led curation — the name says it all. Follow for the editorial sensibility as much as the specific picks.", url:"https://www.instagram.com/khaihastaste", type:"Instagram", tags:["Taste","Curation"] },
+  { name:"Frankie Statham", desc:"UK musician and music curator posting cosy morning soundtracks, jazz picks, and mood-matched listening. Great for slow Sunday sessions and broadening into British indie and jazz-adjacent sounds.", url:"https://www.instagram.com/frankiestathamuk", type:"Instagram", tags:["Music","Jazz","Indie"] },
+  { name:"Fake Plastic Brands", desc:"Marck Lund-Nielsen's Copenhagen brand consultancy turned cultural commentary. His 'Tastemaxxing' series is essential — on how to develop genuine taste versus algorithmic taste. One of the better thinkers on what it means to have a point of view.", url:"https://www.instagram.com/fakeplasticbrands", type:"Instagram", tags:["Design","Taste","Branding","Culture"] },
+];
+
+const DAILY_PICKS = [
+  { eyebrow:"Sunday — The Self", title:"The Chicago Address, 1893", source:"Swami Vivekananda", type:"Text",
+    body:"On 11 September 1893, a 30-year-old monk from Calcutta walked onto a stage in Chicago and said 'Sisters and brothers of America' — the audience rose for two minutes. Read the full address. Then read it again. It is your inheritance.",
+    url:"https://en.wikisource.org/wiki/The_Complete_Works_of_Swami_Vivekananda/Volume_1/Addresses_at_The_Parliament_of_Religions/Response_to_Welcome" },
+  { eyebrow:"Monday — The World That Made Us", title:"Blueprint for Armageddon", source:"Dan Carlin's Hardcore History", type:"Podcast",
+    body:"Six episodes, 24 hours, on the First World War. The most immersive history content ever produced. Start Episode I. You will cancel plans to keep listening. History stops being abstract.",
+    url:"https://www.dancarlin.com/hardcore-history-series/" },
+  { eyebrow:"Tuesday — Big Ideas", title:"The Last Question", source:"Isaac Asimov, 1956", type:"Essay",
+    body:"Asimov's 10-minute short story spans the entire lifespan of the universe — from a question asked to a computer in 2061 to the heat death of everything. He said it was the best thing he ever wrote. The ending will stay with you for days. Free online — search the title.",
+    url:"https://users.ece.cmu.edu/~gamvrosi/thelastq.html" },
+  { eyebrow:"Wednesday — Cinema", title:"Cinema Paradiso (1988)", source:"Giuseppe Tornatore", type:"Film",
+    body:"Love, nostalgia, and cinema itself. A boy grows up in a Sicilian village where the only gathering place is a movie theatre. By the final scene you will understand why some films stay with you forever.",
+    url:"https://letterboxd.com/film/cinema-paradiso/" },
+  { eyebrow:"Thursday — Earth", title:"Braiding Sweetgrass — begin here", source:"Robin Wall Kimmerer", type:"Book",
+    body:"A Potawatomi botanist weaves indigenous plant knowledge with western science into something neither could produce alone. Read the introduction. If it doesn't stop you, I'm out of ideas.",
+    url:null },
+  { eyebrow:"Friday — How to Be in the World", title:"Parts Unknown — pick any episode", source:"Anthony Bourdain", type:"Series",
+    body:"Bourdain used food to get to politics, history, power, and what it means to be human. No one has done this better on television. Myanmar, West Virginia, Hanoi — any of them will do.",
+    url:null },
+  { eyebrow:"Saturday — Listen", title:"A Love Supreme", source:"John Coltrane, 1964", type:"Album",
+    body:"Coltrane recorded this as an offering to God. Four movements: Acknowledgement, Resolution, Pursuance, Psalm. 33 minutes total. Put on headphones, close your eyes. Connects directly to your Eastern reading — this is devotion in sound.",
+    url:null },
+];
+
+const NEWS_SECTIONS = [
+  { title:"Wire & Neutral — Your Baseline", items:[
+    { name:"Reuters", angle:"neutral", desc:"The global wire. Fastest, most factual. Set this as your morning baseline before forming any opinion.", url:"https://www.reuters.com", region:"International" },
+    { name:"Associated Press", angle:"neutral", desc:"Dry, disciplined, essential. No framing, no agenda — just the event.", url:"https://apnews.com", region:"International" },
+    { name:"BBC World Service", angle:"neutral", desc:"Broad international coverage with real depth. Best non-US English-language news desk in the world.", url:"https://www.bbc.com/news/world", region:"International" },
+    { name:"Al Jazeera English", angle:"centre", desc:"The Global South angle on world affairs. Essential counterweight to Western framing on Middle East, Africa, and Asia.", url:"https://www.aljazeera.com", region:"International" },
+  ]},
+  { title:"Left / Progressive", items:[
+    { name:"The Guardian", angle:"left", desc:"British progressive. Strong investigative desk, excellent international and climate coverage.", url:"https://www.theguardian.com", region:"International" },
+    { name:"The Intercept", angle:"left", desc:"Adversarial and investigative. Covers the power structures most outlets are too cautious to touch.", url:"https://theintercept.com", region:"International" },
+    { name:"The New Yorker", angle:"left", desc:"Long-form progressive journalism at its finest. Essays, investigations, and criticism of the highest order.", url:"https://www.newyorker.com", region:"International" },
+    { name:"Scroll.in", angle:"left", desc:"Independent Indian media — sharp, investigative, and unafraid of power. Important for the subcontinent.", url:"https://scroll.in", region:"South Asia" },
+  ]},
+  { title:"Right / Conservative", items:[
+    { name:"Wall Street Journal", angle:"right", desc:"The serious right-centre financial newspaper. News desk is excellent — keep it separate from the opinion pages.", url:"https://www.wsj.com", region:"International" },
+    { name:"The Economist", angle:"centre-right", desc:"The best weekly publication on earth. Pro-market, pro-globalisation, rigorous. Weekly not daily — read it properly.", url:"https://www.economist.com", region:"International" },
+    { name:"The Spectator", angle:"right", desc:"British conservative. Contrarian, well-written, and often ahead of mainstream conservative thought.", url:"https://www.spectator.co.uk", region:"International" },
+    { name:"National Review", angle:"right", desc:"American conservative flagship. Read it to understand the intellectual right, not the populist right.", url:"https://www.nationalreview.com", region:"International" },
+  ]},
+  { title:"Geopolitics & Global Economy", items:[
+    { name:"Foreign Affairs", angle:"centre", desc:"The definitive journal of international relations. Essays by the people who actually shape policy.", url:"https://www.foreignaffairs.com", region:"Geopolitics" },
+    { name:"Foreign Policy", angle:"centre", desc:"More accessible than Foreign Affairs, equally substantive. Essential for IR.", url:"https://foreignpolicy.com", region:"Geopolitics" },
+    { name:"Project Syndicate", angle:"centre", desc:"Essays by global economists, former heads of state, and serious thinkers. Extraordinarily high signal.", url:"https://www.project-syndicate.org", region:"Global Economy" },
+    { name:"Financial Times", angle:"centre", desc:"The global economy newspaper. If money and power are the same thing — and they are — read this.", url:"https://www.ft.com", region:"Global Economy" },
+    { name:"The Diplomat", angle:"neutral", desc:"The best source for Indo-Pacific geopolitics. Indispensable given India's position.", url:"https://thediplomat.com", region:"Asia-Pacific" },
+  ]},
+  { title:"South Asia — Know Your Backyard", items:[
+    { name:"The Hindu", angle:"centre-left", desc:"India's newspaper of record. Measured, serious, and the most reliable for Indian domestic politics.", url:"https://www.thehindu.com", region:"India" },
+    { name:"Indian Express", angle:"centre", desc:"Strong investigative tradition. Best for breaking Indian political news.", url:"https://indianexpress.com", region:"India" },
+    { name:"The Wire", angle:"left", desc:"India's foremost independent investigative outlet. Critical of power, regardless of party.", url:"https://thewire.in", region:"India" },
+    { name:"Dawn", angle:"neutral", desc:"Pakistan's oldest and most respected newspaper. Essential for understanding the subcontinent from across the border.", url:"https://www.dawn.com", region:"South Asia" },
+  ]},
+  { title:"Good News — Because You Also Need Hope", items:[
+    { name:"Positive News", angle:"good", desc:"Rigorous, solution-focused journalism. Not fluffy — genuinely important stories of human progress that don't get covered.", url:"https://www.positive.news", region:"International" },
+    { name:"Reasons to Be Cheerful", angle:"good", desc:"David Byrne's publication on what's actually working in the world. Beautifully written and curated.", url:"https://reasonstobecheerful.world", region:"International" },
+    { name:"Solutions Journalism Network", angle:"good", desc:"Journalism that covers how communities solve problems, not just how problems exist.", url:"https://www.solutionsjournalism.org", region:"International" },
+    { name:"Good News Network", angle:"good", desc:"Daily counter-programming to the doom cycle. A reminder that progress is real, just not loud.", url:"https://www.goodnewsnetwork.org", region:"International" },
+  ]},
+];
+
+// ─── UTILS ───────────────────────────────────────────────────────────────
+
+function switchTab(id, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  el.classList.add('active');
+}
+
+function tag(t) { return `<span class="tag">${t}</span>`; }
+
+// ─── RENDER ──────────────────────────────────────────────────────────────
+
+function initDate() {
+  const d = new Date();
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('dayName').textContent = days[d.getDay()];
+  document.getElementById('fullDate').textContent = `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+function renderToday() {
+  const p = DAILY_PICKS[new Date().getDay()];
+  document.getElementById('static-pick').innerHTML = `
+    <div class="pick-card">
+      <div class="eyebrow">✦ ${p.eyebrow}</div>
+      <div class="pick-title">${p.title}</div>
+      <div class="pick-source">${tag(p.type)} ${p.source}</div>
+      <div class="pick-body">${p.body}</div>
+      ${p.url ? `<a href="${p.url}" target="_blank" class="btn">Open →</a>` : `<span style="font-size:12px;color:var(--text-muted)">Search the title to find a copy</span>`}
+    </div>`;
+}
+
+function renderGenres() {
+  document.getElementById('genreGrid').innerHTML = GENRES.map(g => `
+    <div class="genre-card">
+      <div class="genre-header"><div class="dot" style="background:${g.color}"></div><div class="genre-name">${g.name}</div></div>
+      ${g.recs.map(r => `
+        <div class="rec-item">
+          <div class="rec-title">${r.url ? `<a href="${r.url}" target="_blank">${r.title}</a>` : r.title}</div>
+          <div class="rec-meta">${tag(r.type)} ${r.author}</div>
+        </div>`).join('')}
+    </div>`).join('');
+}
+
+function renderCinema() {
+  document.getElementById('cinemaContent').innerHTML = CINEMA.map(s => `
+    <div class="mood-section">
+      <div class="mood-header"><div class="dot" style="background:${s.color}"></div><div class="mood-label">${s.mood}</div></div>
+      <div class="film-grid">${s.films.map(f => `
+        <div class="film-card">
+          <div class="film-title">${f.title}</div>
+          <div class="film-dir">${f.dir}</div>
+          <div class="film-why">${f.why}</div>
+        </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function renderBooks() {
+  document.getElementById('booksContent').innerHTML = BOOKS.map(s => `
+    <div class="book-section">
+      <div class="book-section-title"><div class="dot" style="background:${s.color}"></div>${s.section}</div>
+      <div class="book-grid">${s.books.map(b => `
+        <div class="film-card">
+          <div class="film-title">${b.title}</div>
+          <div class="film-dir">${b.author}</div>
+          <div class="film-why">${b.why}</div>
+        </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function renderMusic() {
+  document.getElementById('musicCurators').innerHTML = MUSIC_CURATORS.map(c => `
+    <div class="curator-chip">
+      <div class="curator-name-m">@${c.name}</div>
+      <div class="curator-desc-m">${c.desc}</div>
+      <a href="${c.url}" target="_blank" class="curator-link">Follow →</a>
+    </div>`).join('');
+  document.getElementById('pathwayGrid').innerHTML = MUSIC_PATHWAYS.map(p => `
+    <div class="pathway-card">
+      <div class="pathway-genre"><div class="dot" style="background:${p.color}"></div>${p.genre}</div>
+      ${p.entries.map(e => `
+        <div class="music-entry">
+          <div class="music-title">${e.title}</div>
+          <div class="music-artist">${e.artist}</div>
+          <div class="music-why">${e.why}</div>
+        </div>`).join('')}
+    </div>`).join('');
+}
+
+function renderCurators() {
+  document.getElementById('curatorFull').innerHTML = ALL_CURATORS.map(c => `
+    <div class="curator-full-card">
+      <div>
+        <div class="curator-n">${c.name}</div>
+        <div class="curator-d">${c.desc}</div>
+        <div class="curator-t">${c.tags.map(t => `<span class="tag">${t}</span>`).join('')} <span class="tag" style="background:transparent;border:1px solid var(--border)">${c.type}</span></div>
+      </div>
+      <a href="${c.url}" target="_blank" class="curator-ext">Visit →</a>
+    </div>`).join('');
+}
+
+function renderNews() {
+  const angleClass = { left:'angle-left', 'centre-left':'angle-left', centre:'angle-centre', 'centre-right':'angle-right', right:'angle-right', neutral:'angle-neutral', good:'angle-good' };
+  const angleLabel = { left:'Left', 'centre-left':'Centre-Left', centre:'Centre', 'centre-right':'Centre-Right', right:'Right', neutral:'Neutral', good:'Good News' };
+  document.getElementById('newsContent').innerHTML = NEWS_SECTIONS.map(s => `
+    <div class="news-section">
+      <div class="news-section-title">${s.title}</div>
+      <div class="news-grid">${s.items.map(n => `
+        <div class="news-card">
+          <div class="news-card-top">
+            <div class="news-name">${n.name}</div>
+            <div class="news-angle ${angleClass[n.angle] || 'angle-neutral'}">${angleLabel[n.angle] || n.angle}</div>
+          </div>
+          <div class="news-desc">${n.desc}</div>
+          <a href="${n.url}" target="_blank" class="news-link">Visit →</a>
+          <div class="news-region">${n.region}</div>
+        </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+// ─── ARTICLES ────────────────────────────────────────────────────────────────
+const ARTICLES = [
+  // POWER & STATECRAFT
+  { cat:"power", title:"Politics and the English Language", author:"George Orwell", source:"1946", time:"20 min", desc:"The rules for clear thinking disguised as rules for clear writing. Every sentence you write for the rest of your life will be better for having read this.", url:"https://www.orwellfoundation.com/the-orwell-foundation/orwell/essays-and-other-works/politics-and-the-english-language/" },
+  { cat:"power", title:"Shooting an Elephant", author:"George Orwell", source:"1936", time:"15 min", desc:"Orwell as a colonial police officer in Burma, forced to shoot an elephant to avoid looking weak. The most honest 15 minutes on power, cowardice, and imperialism ever written.", url:"https://www.orwellfoundation.com/the-orwell-foundation/orwell/essays-and-other-works/shooting-an-elephant/" },
+  { cat:"power", title:"The End of History?", author:"Francis Fukuyama", source:"The National Interest, 1989", time:"30 min", desc:"The essay that declared liberal democracy the final form of human government. Reading it now, knowing how wrong he was, is as instructive as reading it when he was right.", url:"https://www.jstor.org/stable/24027184" },
+  { cat:"power", title:"The Sources of Soviet Conduct", author:"George Kennan (X)", source:"Foreign Affairs, 1947", time:"25 min", desc:"The anonymous essay that invented Cold War containment strategy. A 29-year-old diplomat writing the doctrine that shaped the next 50 years. Essential IR reading.", url:"https://www.foreignaffairs.com/articles/russian-federation/1947-07-01/sources-soviet-conduct" },
+  { cat:"power", title:"Why the Ukraine Crisis Is the West's Fault", author:"John Mearsheimer", source:"Foreign Affairs, 2014", time:"25 min", desc:"The realist case that NATO expansion, not Putin's revanchism, caused the Ukraine war. Agree or not, you cannot understand the debate without reading this argument in full.", url:"https://www.foreignaffairs.com/articles/russia-fsu/2014-08-18/why-ukraine-crisis-west-s-fault" },
+
+  // HISTORY
+  { cat:"history", title:"The Case for Reparations", author:"Ta-Nehisi Coates", source:"The Atlantic, 2014", time:"50 min", desc:"The definitive article on American slavery's long economic shadow. Not an op-ed — a piece of historical journalism that changed the conversation. Read it as a model of how to argue with evidence.", url:"https://www.theatlantic.com/magazine/archive/2014/06/the-case-for-reparations/361631/" },
+  { cat:"history", title:"The Rise of Illiberal Democracy", author:"Fareed Zakaria", source:"Foreign Affairs, 1997", time:"30 min", desc:"Written in 1997, it predicted every authoritarian turn of the 21st century. The distinction between democracy and liberalism is the most important conceptual tool in contemporary IR.", url:"https://www.foreignaffairs.com/articles/1997-11-01/rise-illiberal-democracy" },
+  { cat:"history", title:"The Bengal Famine of 1943", author:"Madhusree Mukerjee", source:"The Guardian", time:"20 min", desc:"Churchill's wartime decisions killed three million people in Bengal. Mukerjee's research, based on newly declassified files, makes the case that this was policy, not accident.", url:"https://www.theguardian.com/world/2010/oct/28/churchill-bengal-famine" },
+  { cat:"history", title:"India and the Balance of Power", author:"C. Raja Mohan", source:"Foreign Affairs, 2006", time:"25 min", desc:"How India recalibrated its foreign policy after the Cold War and began its pivot toward a multipolar world order. The foundational article for understanding where India sits today.", url:"https://www.foreignaffairs.com/articles/asia/2006-07-01/india-and-balance-power" },
+
+  // PHILOSOPHY
+  { cat:"phil", title:"This Is Water", author:"David Foster Wallace", source:"Kenyon Commencement, 2005", time:"15 min", desc:"The only commencement speech worth reading. On choosing what to pay attention to, and why that is the work of a lifetime. Memorise the fish story.", url:"https://fs.blog/david-foster-wallace-this-is-water/" },
+  { cat:"phil", title:"The Ones Who Walk Away from Omelas", author:"Ursula K. Le Guin", source:"1973", time:"10 min", desc:"A city of perfect happiness, sustained by one child's perpetual suffering. The clearest philosophical thought-experiment ever written in fiction form. 10 minutes that will stay with you for years.", url:"https://shsdaemen.pbworks.com/w/file/fetch/115951139/the-ones-who-walk-away-from-omelas.pdf" },
+  { cat:"phil", title:"In Praise of Idleness", author:"Bertrand Russell", source:"Harper's, 1932", time:"20 min", desc:"Russell argues that the glorification of work is a moral disaster — that civilisation's best ideas have always come from people with time to think. Especially good if you're feeling productive.", url:"https://harpers.org/archive/1932/10/in-praise-of-idleness/" },
+  { cat:"phil", title:"Tradition and the Individual Talent", author:"T.S. Eliot", source:"1919", time:"20 min", desc:"Eliot's argument that originality requires deep knowledge of tradition — you cannot escape what you don't know. Essential for anyone trying to develop a creative or intellectual voice.", url:"https://www.bartleby.com/200/sw4.html" },
+  { cat:"phil", title:"The Myth of Sisyphus (Essay)", author:"Albert Camus", source:"1942", time:"35 min", desc:"The absurdist manifesto. Camus asks whether life is worth living given its fundamental meaninglessness, and arrives at a defiant yes. Concludes that we must imagine Sisyphus happy.", url:"https://www2.hawaii.edu/~freeman/courses/phil360/16.%20Myth%20of%20Sisyphus.pdf" },
+
+  // IDEAS
+  { cat:"ideas", title:"Putting Time in Perspective", author:"Tim Urban", source:"Wait But Why", time:"15 min", desc:"A visual essay that makes deep time visceral. Your great-great-grandmother and Cleopatra lived closer together in time than Cleopatra and the pyramids. Read slowly.", url:"https://waitbutwhy.com/2013/08/putting-time-in-perspective.html" },
+  { cat:"ideas", title:"The Cook and the Chef: Musk's Secret Sauce", author:"Tim Urban", source:"Wait But Why", time:"45 min", desc:"The clearest explanation of first-principles thinking ever written. Urban uses Musk as the case study, but the framework is universally applicable. The key distinction: following a recipe versus understanding why it works.", url:"https://waitbutwhy.com/2015/11/the-cook-and-the-chef-musks-secret-sauce.html" },
+  { cat:"ideas", title:"Horizontal History", author:"Tim Urban", source:"Wait But Why", time:"15 min", desc:"What happened in the rest of the world when major historical events occurred? Orville Wright and Anne Frank were alive at the same time. Rewires how you think about the past.", url:"https://waitbutwhy.com/2016/01/horizontal-history.html" },
+  { cat:"ideas", title:"The Taste Gap", author:"Ira Glass", source:"Current TV / transcript", time:"5 min", desc:"On why beginners with good taste make bad work, and why the only solution is volume. The most encouraging thing ever said to anyone who creates anything.", url:"https://www.goodreads.com/quotes/309485" },
+
+  // CULTURE
+  { cat:"culture", title:"My Dungeon Shook: Letter to My Nephew", author:"James Baldwin", source:"The Progressive, 1962", time:"15 min", desc:"Baldwin's letter to his 14-year-old nephew about race, America, and what it means to love a country that doesn't love you back. The most devastating prose in American letters. Read it twice.", url:"https://progressive.org/magazine/letter-nephew/" },
+  { cat:"culture", title:"Notes on Camp", author:"Susan Sontag", source:"Partisan Review, 1964", time:"30 min", desc:"Sontag's taxonomy of a sensibility that was previously unnamed. Camp as a way of seeing. The essay that made cultural criticism serious. Essential for anyone developing taste.", url:"https://monoskop.org/images/a/a1/Sontag_Susan_1964_Notes_on_Camp.pdf" },
+  { cat:"culture", title:"Against Interpretation", author:"Susan Sontag", source:"1964", time:"20 min", desc:"Sontag's argument that art criticism has become an obstacle to actually experiencing art — that we need an 'erotics of art' rather than a hermeneutics. Against explaining, in favour of feeling.", url:"https://faculty.georgetown.edu/irvinem/theory/Sontag-against-interpretation-1966.pdf" },
+
+  // FILM
+  { cat:"film", title:"Roger Ebert on 2001: A Space Odyssey", author:"Roger Ebert", source:"RogerEbert.com", time:"10 min", desc:"The best piece of film criticism in the English language on the most ambitious film ever made. Ebert explains what Kubrick was doing and why it requires multiple viewings. Read it after watching.", url:"https://www.rogerebert.com/reviews/great-movies/2001-a-space-odyssey-1968" },
+  { cat:"film", title:"Roger Ebert on Pather Panchali", author:"Roger Ebert", source:"RogerEbert.com", time:"8 min", desc:"Ebert on Satyajit Ray's debut — why it matters, what Ray saw that no one else saw, and what it means to make art from nothing. A love letter to the film that is also a lesson in how to watch it.", url:"https://www.rogerebert.com/reviews/great-movies/pather-panchali-1955" },
+  { cat:"film", title:"In the Blink of an Eye", author:"Walter Murch (excerpt)", source:"Silman-James Press", time:"20 min", desc:"Murch's theory of why we cut in film editing — and what the blink of an eye has to do with thought. The first 40 pages of the definitive book on editing, available in previews. Changed how directors think about montage.", url:"https://www.google.com/books/edition/In_the_Blink_of_an_Eye/RBtvAAAAMAAJ" },
+
+  // GEOPOLITICS
+  { cat:"geo", title:"The Clash of Civilizations?", author:"Samuel Huntington", source:"Foreign Affairs, 1993", time:"35 min", desc:"The essay that predicted post-Cold War conflict would run along civilisational rather than ideological fault lines. Wrong in many ways, influential beyond measure. You cannot discuss IR without knowing this argument.", url:"https://www.foreignaffairs.com/articles/united-states/1993-06-01/clash-civilizations" },
+  { cat:"geo", title:"Does the 21st Century Belong to China?", author:"Niall Ferguson & Fareed Zakaria", source:"Munk Debates", time:"25 min", desc:"The definitive debate transcript on Chinese century thesis. Ferguson for, Zakaria against. Watch the video or read the transcript — either way, you'll end up with a more nuanced view than before.", url:"https://munkdebates.com/debates/china" },
+
+  // RELIGION & SACRED TRADITIONS
+  { cat:"religion", title:"Judaism: History, Beliefs and Practices", author:"BBC Religions", source:"bbc.co.uk/religion", time:"10 min",
+    desc:"From Abraham to the Diaspora to modern Israel — a compressed but complete history of the world's oldest surviving monotheism. Judaism is the root from which Christianity and Islam both grew, and understanding it changes how you read both.",
+    url:"https://www.bbc.co.uk/religion/religions/judaism/history/history_1.shtml" },
+  { cat:"religion", title:"Christianity: From Sect to Empire", author:"BBC Religions", source:"bbc.co.uk/religion", time:"10 min",
+    desc:"How a persecuted Jewish sect became the official religion of the Roman Empire in 300 years. Constantine's conversion in 313 CE is one of history's most consequential political decisions — Christianity went from underground movement to state apparatus overnight.",
+    url:"https://www.bbc.co.uk/religion/religions/christianity/history/" },
+  { cat:"religion", title:"Islam: Origins, Expansion and the Caliphates", author:"BBC Religions", source:"bbc.co.uk/religion", time:"10 min",
+    desc:"From Muhammad's first revelation in 610 CE to an empire stretching from Spain to Indonesia within a century. The fastest territorial expansion in human history — and it was carried as much by trade and administration as by the sword.",
+    url:"https://www.bbc.co.uk/religion/religions/islam/history/" },
+  { cat:"religion", title:"Hinduism: The World's Oldest Living Religion", author:"BBC Religions", source:"bbc.co.uk/religion", time:"10 min",
+    desc:"Hinduism is less a single religion than a civilisation — no single founder, no single text, no single theology. The Vedic tradition stretches back 4,000 years and has absorbed, survived and outlasted every empire that came through the subcontinent.",
+    url:"https://www.bbc.co.uk/religion/religions/hinduism/history/" },
+  { cat:"religion", title:"Buddhism: The Dharma and Its Spread", author:"BBC Religions", source:"bbc.co.uk/religion", time:"10 min",
+    desc:"Siddhartha Gautama was a prince who renounced power to understand suffering. Within 300 years, the emperor Ashoka had made Buddhism the ideology of the largest empire in Indian history. How a philosophy of non-attachment became a political tool.",
+    url:"https://www.bbc.co.uk/religion/religions/buddhism/history/" },
+  { cat:"religion", title:"Zoroastrianism: The Religion That Shaped All Others", author:"World History Encyclopedia", source:"worldhistory.org", time:"12 min",
+    desc:"Zoroaster was probably the first person to propose a single god, a cosmic battle between good and evil, a final judgment, heaven and hell, and the resurrection of the dead. Sound familiar? Judaism, Christianity, and Islam all carry his fingerprints. The oldest influence you've never been taught.",
+    url:"https://www.worldhistory.org/zoroastrianism/" },
+  { cat:"religion", title:"Ancient Egyptian Religion: Gods, Pharaohs and the Afterlife", author:"World History Encyclopedia", source:"worldhistory.org", time:"12 min",
+    desc:"The Pharaoh was not just a ruler — he was a god in human form, the intermediary between the cosmic order (Ma'at) and the human world. Egyptian religion was the most sophisticated integration of theology and political power ever built. Everything from pyramids to mummification was statecraft.",
+    url:"https://www.worldhistory.org/Egyptian_Religion/" },
+  { cat:"religion", title:"Mesopotamian Religion: The First Gods", author:"World History Encyclopedia", source:"worldhistory.org", time:"10 min",
+    desc:"The Sumerians and Babylonians invented the template that every subsequent religion used: a pantheon of gods with human personalities, creation myths, floods, divine law codes. The Epic of Gilgamesh predates the Bible by 1,500 years and shares its flood narrative almost word for word.",
+    url:"https://www.worldhistory.org/Mesopotamian_Religion/" },
+  { cat:"religion", title:"Jainism: The Oldest Philosophy of Non-Violence", author:"BBC Religions", source:"bbc.co.uk/religion", time:"8 min",
+    desc:"Older than Buddhism, contemporary with the Upanishads, Jainism developed the most radical philosophy of non-violence (ahimsa) in history. Gandhi credited it directly. Mahavira's insight — that every living thing has a soul and suffers — produced an ethical framework that still has no Western equivalent.",
+    url:"https://www.bbc.co.uk/religion/religions/jainism/" },
+  { cat:"religion", title:"Sikhism: The Youngest Major World Religion", author:"BBC Religions", source:"bbc.co.uk/religion", time:"8 min",
+    desc:"Guru Nanak founded Sikhism in 15th-century Punjab at the intersection of Hinduism and Islam, rejecting the caste system and religious division. Ten Gurus across 200 years built a distinct theology, a martial tradition, and a democratic institution — the Khalsa — that still functions today.",
+    url:"https://www.bbc.co.uk/religion/religions/sikhism/" },
+  { cat:"religion", title:"Greek and Roman Polytheism: Religion as Civic Life", author:"World History Encyclopedia", source:"worldhistory.org", time:"10 min",
+    desc:"For the Greeks and Romans, religion was not private belief — it was public ritual. The gods needed to be kept satisfied through sacrifice, festival, and correct procedure. When Constantine banned traditional religion, he wasn't suppressing belief — he was dismantling an entire civic order.",
+    url:"https://www.worldhistory.org/Greek_Religion/" },
+  { cat:"religion", title:"Shinto: Japan's Indigenous Religion", author:"BBC Religions", source:"bbc.co.uk/religion", time:"8 min",
+    desc:"Shinto has no founder, no scripture, no fixed theology — only an orientation toward the sacred in nature (kami) and the importance of ritual purity. Yet it was used to legitimate the divine emperor and fuel Japanese nationalism through 1945. The most politically weaponised 'gentle' religion in history.",
+    url:"https://www.bbc.co.uk/religion/religions/shinto/" },
+  { cat:"religion", title:"How Religion Became Power: The Sacred and the Political", author:"Yuval Noah Harari", source:"Sapiens excerpt, via various", time:"15 min",
+    desc:"Harari's argument that the agricultural revolution required shared myths to organise mass cooperation — and that religion was the first and most effective myth-making system. 'Large-scale human cooperation is based on myths.' The foundational case for understanding religion as social technology.",
+    url:"https://www.ynharari.com/book/sapiens-2/" },
+  { cat:"religion", title:"The Council of Nicaea: How Doctrine Was Decided", author:"Smithsonian Magazine", source:"smithsonianmag.com", time:"10 min",
+    desc:"In 325 CE, Constantine called 300 bishops together and made them vote on the nature of God. The result — the Nicene Creed — defined Christian orthodoxy for 1,700 years. What was theology was also politics: heresy and empire were the same question.",
+    url:"https://www.smithsonianmag.com/history/constantine-council-nicaea-180961144/" },
+  { cat:"religion", title:"The Reformation: When Religion Broke Europe", author:"BBC History", source:"bbc.co.uk/history", time:"12 min",
+    desc:"Martin Luther's 95 Theses in 1517 triggered a century of religious wars that killed millions and redrawn the map of Europe. The Reformation was also a media revolution — the printing press made mass theological argument possible for the first time. Religion, technology, and political fragmentation: a pattern that repeats.",
+    url:"https://www.bbc.co.uk/history/british/tudors/reformation_overview_01.shtml" },
+  { cat:"religion", title:"Ashoka's Buddhism: Empire and Compassion", author:"World History Encyclopedia", source:"worldhistory.org", time:"10 min",
+    desc:"After a war that killed 100,000 people, the emperor Ashoka converted to Buddhism, renounced violence, and built hospitals, planted trees, and inscribed edicts of compassion across his empire. The first ruler in history to govern explicitly by an ethical philosophy — and the question of whether it worked is still debated.",
+    url:"https://www.worldhistory.org/Ashoka_the_Great/" },
+  { cat:"religion", title:"Maya Religion: Sacrifice, Time and the Cosmos", author:"World History Encyclopedia", source:"worldhistory.org", time:"12 min",
+    desc:"The Maya built one of the most sophisticated cosmological systems in human history — a calendar more accurate than the Julian, a creation myth (Popol Vuh) of extraordinary complexity, and a theology in which the gods required human blood to keep the universe running. Their religion was inseparable from their mathematics and astronomy.",
+    url:"https://www.worldhistory.org/Maya_Religion/" },
+  { cat:"religion", title:"Aztec Religion: The Fifth Sun and the Need for Blood", author:"World History Encyclopedia", source:"worldhistory.org", time:"12 min",
+    desc:"The Aztecs believed they were living in the fifth age of the world — the previous four had ended in catastrophe — and that only human sacrifice could keep the sun moving. A theology of cosmic obligation: the gods had bled to create humanity, and humanity bled in return. When Cortés arrived, he dismantled a worldview, not just an empire.",
+    url:"https://www.worldhistory.org/Aztec_Religion/" },
+  { cat:"religion", title:"Norse Mythology: Gods, Giants and Ragnarök", author:"World History Encyclopedia", source:"worldhistory.org", time:"10 min",
+    desc:"The Norse pantheon is unique in that its gods are mortal — Odin knows Ragnarök is coming and prepares anyway. A religion built around fate, honour, and the acceptance of inevitable doom. It shaped Viking society, their legal system, their warrior culture, and — through the Eddas — modern fantasy literature from Tolkien to Marvel.",
+    url:"https://www.worldhistory.org/Norse_Mythology/" },
+  { cat:"religion", title:"Celtic Religion: Druids, Sacred Groves and the Other World", author:"World History Encyclopedia", source:"worldhistory.org", time:"10 min",
+    desc:"The Celts left almost no written religion — the Druids transmitted everything orally. What we know comes from Roman accounts (biased) and archaeology. A nature-based religion centred on sacred landscapes, the thin boundary between worlds, and a priesthood that doubled as judges and scientists. Rome suppressed the Druids specifically because they were the social order.",
+    url:"https://www.worldhistory.org/Celtic_Religion/" },
+  { cat:"religion", title:"Inca Religion: The Sun God and Sacred Empire", author:"World History Encyclopedia", source:"worldhistory.org", time:"10 min",
+    desc:"The Inca emperor was the son of Inti, the sun god — a living deity who could not be questioned. The entire economic and agricultural system of the empire was organised around religious obligation. Mummified ancestors were brought out for festivals and consulted for decisions. The dead governed the living.",
+    url:"https://www.worldhistory.org/Inca_Religion/" },
+  { cat:"religion", title:"Taoism and Confucianism: China's Two Great Traditions", author:"BBC Religions", source:"bbc.co.uk/religion", time:"10 min",
+    desc:"Confucius gave China a social order based on hierarchy, duty, and ritual. Lao Tzu gave it a counter-philosophy: go with the flow of nature, release control. For 2,500 years these two systems argued across Chinese history — and between them they shaped the most continuously governed civilisation on earth.",
+    url:"https://www.bbc.co.uk/religion/religions/taoism/" },
+  { cat:"religion", title:"Animism: The World's Original Religion", author:"World History Encyclopedia", source:"worldhistory.org", time:"8 min",
+    desc:"Before every named religion came animism — the belief that everything has a spirit: rivers, trees, mountains, animals. It is the oldest human religious impulse and still the base layer of most indigenous traditions globally. Every major religion has animist roots if you dig far enough. Understanding animism is understanding the beginning of the human spiritual project.",
+    url:"https://www.worldhistory.org/Animism/" },
+  { cat:"religion", title:"The Epic of Gilgamesh: The World's First Religious Text", author:"World History Encyclopedia", source:"worldhistory.org", time:"12 min",
+    desc:"Written in Sumerian cuneiform around 2100 BCE, Gilgamesh is the first narrative about what it means to be human: power, friendship, grief, the fear of death, and the search for immortality. It contains a flood story almost identical to Noah's, written 1,500 years before Genesis. The founding document of human storytelling — and theology.",
+    url:"https://www.worldhistory.org/gilgamesh/" },
+  { cat:"religion", title:"How the Catholic Church Built Medieval Europe", author:"History.com", source:"history.com", time:"12 min",
+    desc:"At its peak the medieval Catholic Church owned one-third of all land in Europe, ran the courts, controlled marriage and inheritance, and could excommunicate kings. A 1,000-year experiment in theocratic administration. Understanding this is understanding why the Reformation, the Enlightenment, and the French Revolution happened.",
+    url:"https://www.history.com/topics/middle-ages/catholic-church-in-the-middle-ages" },
+  { cat:"religion", title:"The Islamic Golden Age: When Baghdad Was the World", author:"National Geographic", source:"nationalgeographic.com", time:"12 min",
+    desc:"From 800–1200 CE, the Abbasid Caliphate in Baghdad was the intellectual centre of the world. Muslim scholars preserved Greek philosophy, invented algebra, advanced astronomy, and wrote encyclopaedias while Europe lived in the Dark Ages. A reminder that civilisational leadership is never permanent — and that religion can build as well as constrain.",
+    url:"https://www.nationalgeographic.com/history/article/islamic-golden-age" },
+  { cat:"religion", title:"Ancient Indian Religion Before Hinduism: The Vedic World", author:"World History Encyclopedia", source:"worldhistory.org", time:"10 min",
+    desc:"The Vedic religion of 1500 BCE — brought by the Indo-Aryan migration — was not Hinduism. It was a fire-sacrifice tradition with a rigid priest class (Brahmins), a pantheon of nature deities (Indra, Varuna, Agni), and oral poetry of extraordinary beauty (the Rig Veda). Hinduism grew out of this world as it collided with the Dravidian traditions of South India.",
+    url:"https://www.worldhistory.org/Vedic_Period/" },
+
+  // NATURE
+  { cat:"nature", title:"The Sixth Extinction", author:"Elizabeth Kolbert", source:"The New Yorker, 2009", time:"30 min", desc:"The original New Yorker article that preceded the book. Kolbert documents the end-Pleistocene extinctions and what they tell us about the present mass die-off. Science journalism at its absolute best.", url:"https://www.newyorker.com/magazine/2009/05/25/the-sixth-extinction" },
+  { cat:"nature", title:"Braiding Sweetgrass — The Skywoman Falling", author:"Robin Wall Kimmerer", source:"Milkweed Editions (excerpt)", time:"20 min", desc:"The first chapter of Braiding Sweetgrass — the Potawatomi creation story versus the Genesis story, and what each says about humanity's relationship to the earth. The most beautiful opening chapter in contemporary non-fiction.", url:"https://milkweed.org/book/braiding-sweetgrass" },
+];
+
+const ARTICLE_CATS = [
+  { id:"all", label:"All" },
+  { id:"power", label:"Power" },
+  { id:"history", label:"History" },
+  { id:"phil", label:"Philosophy" },
+  { id:"ideas", label:"Ideas" },
+  { id:"culture", label:"Culture" },
+  { id:"film", label:"Film" },
+  { id:"geo", label:"Geopolitics" },
+  { id:"nature", label:"Nature" },
+  { id:"religion", label:"Religion" },
+];
+
+let activeArticleCat = "all";
+
+function renderArticles() {
+  // Filters
+  document.getElementById('articleFilters').innerHTML = ARTICLE_CATS.map(c =>
+    `<button class="af-btn${c.id === activeArticleCat ? ' active' : ''}" onclick="filterArticles('${c.id}')">${c.label}</button>`
+  ).join('');
+  // Grid
+  const visible = activeArticleCat === "all" ? ARTICLES : ARTICLES.filter(a => a.cat === activeArticleCat);
+  const catClass = { power:"cat-power", history:"cat-history", phil:"cat-phil", ideas:"cat-ideas", culture:"cat-culture", film:"cat-film", geo:"cat-geo", india:"cat-india", nature:"cat-nature", religion:"cat-religion" };
+  const catLabel = { power:"Power", history:"History", phil:"Philosophy", ideas:"Ideas", culture:"Culture", film:"Film", geo:"Geopolitics", india:"India", nature:"Nature", religion:"Religion" };
+  document.getElementById('articleGrid').innerHTML = visible.map(a => `
+    <div class="article-card">
+      <div class="article-top">
+        <span class="article-cat ${catClass[a.cat] || 'cat-ideas'}">${catLabel[a.cat] || a.cat}</span>
+        <span class="article-time">~${a.time}</span>
+      </div>
+      <div class="article-title">${a.title}</div>
+      <div class="article-author">${a.author} · <span style="font-style:italic;">${a.source}</span></div>
+      <div class="article-desc">${a.desc}</div>
+      ${a.url ? `<a href="${a.url}" target="_blank" class="article-link">Read →</a>` : `<span class="article-link" style="color:var(--text-muted);">Search online</span>`}
+    </div>
+  `).join('');
+}
+
+function filterArticles(cat) {
+  activeArticleCat = cat;
+  renderArticles();
+}
+
+// ─── STYLE ───────────────────────────────────────────────────────────────────
+const STYLE_CURATORS = [
+  { name:"Tim Dessaint", handle:"timdessaint", angle:"Foundation", angleClass:"sa-foundation",
+    desc:"The most thoughtful voice in men's style. Paris-born, Sydney-based. Silhouettes, capsule wardrobes, quality over quantity. Watches fashion the way a critic watches film — always asking why.", url:"https://www.instagram.com/timdessaint" },
+  { name:"Parker York Smith", handle:"parkeryorksmith", angle:"Foundation", angleClass:"sa-foundation",
+    desc:"'The Looksmith.' 2M followers who come for the confidence framework, not just the outfits. Good for building the fundamentals of how to think about getting dressed.", url:"https://www.instagram.com/parkeryorksmith" },
+  { name:"Bryson Moore (BryceKicks)", handle:"brycekicks", angle:"Street & Sneakers", angleClass:"sa-street",
+    desc:"Toronto-based weekly men's fashion and sneaker content. Where streetwear and deliberate dressing overlap. Good entry point into sneaker culture as a serious aesthetic pursuit.", url:"https://www.instagram.com/brycekicks" },
+  { name:"Jabari Sandifer", handle:"jabarisandifer", angle:"Street & Sneakers", angleClass:"sa-street",
+    desc:"Chicago menswear with a specific, unfussy point of view. Follows his own logic rather than the algorithm's.", url:"https://www.instagram.com/jabarisandifer" },
+  { name:"Outdoor Jackson", handle:"outdoorjackson", angle:"Outdoor & Functional", angleClass:"sa-outdoor",
+    desc:"The rugged, functional aesthetic — where gear meets style. Useful for developing an eye for clothes that do something, not just signal something.", url:"https://www.instagram.com/outdoorjackson" },
+  { name:"Bottega Selezione", handle:"bottegaselezione", angle:"Quiet Luxury", angleClass:"sa-luxury",
+    desc:"Italian quiet-luxury curation. Timeless palettes, superior fabrics, nothing loud. The anti-hype aesthetic — clothes designed to last decades, not seasons. Study this for what 'elevated' actually means.", url:"https://www.instagram.com/bottegaselezione" },
+  { name:"Anuj Dutta", handle:"imanujduttaa", angle:"South Asian Lens", angleClass:"sa-south-asian",
+    desc:"Indian fashion and lifestyle — fashion, watches, sneakers, all told from a perspective that doesn't require translation. The South Asian take on contemporary personal style.", url:"https://www.instagram.com/imanujduttaa" },
+];
+
+const STYLE_PRINCIPLES = [
+  { num:"01", title:"Fit is the only rule", desc:"Everything else — colour, brand, price — is secondary. A £20 shirt that fits perfectly beats a £200 shirt that doesn't." },
+  { num:"02", title:"Dress for the person you're becoming", desc:"Your clothes signal something before you speak. Decide what. Then be consistent about it." },
+  { num:"03", title:"Build in palette, not in pieces", desc:"A wardrobe works when everything connects. Pick 3–4 colours that go together and stay there." },
+  { num:"04", title:"Quality over quantity — always", desc:"Five pieces you love and wear constantly beat twenty pieces you wear occasionally. Fewer, better." },
+  { num:"05", title:"Understand the context", desc:"Clothes are socially coded. You don't have to follow every code, but you should understand every code you break." },
+];
+
+const STYLE_BOOKS = [
+  { name:"Dressing the Man", color:"#3d5a8a", recs:[
+    { title:"Dressing the Man", author:"Alan Flusser", type:"Book", url:null },
+    { title:"The Thoughtful Dresser", author:"Linda Grant", type:"Book", url:null },
+    { title:"Overdressed", author:"Elizabeth Cline", type:"Book", url:null },
+  ]},
+  { name:"Understanding What Clothes Say", color:"#8b5e3c", recs:[
+    { title:"Tastemaxxing series", author:"Fake Plastic Brands (@fakeplasticbrands)", type:"Instagram", url:"https://www.instagram.com/fakeplasticbrands" },
+    { title:"The Language of Clothes", author:"Alison Lurie", type:"Book", url:null },
+    { title:"Fashion Theory journal", author:"Various", type:"Publication", url:"https://www.tandfonline.com/journals/rfft20" },
+  ]},
+];
+
+const STYLE_ARTICLES = [
+  // CRAFT — how to dress
+  { cat:"craft", title:"Six Suggestions for Developing Personal Style", author:"Jesse Thorn", source:"Put This On", time:"12 min",
+    desc:"The best introductory framework for developing your own style — not a formula, but a way of thinking about how to approach getting dressed with intention. Start here before anything else.",
+    url:"https://putthison.com/six-suggestions-for-developing-personal-style/" },
+  { cat:"craft", title:"A Practical Guide to Getting Started", author:"Put This On", source:"putthison.com", time:"15 min",
+    desc:"From wardrobe inventory to first purchases — the actionable side of building a wardrobe. No theory, just method. Good when you want to translate reading into actual decisions.",
+    url:"https://www.putthison.com/a-practical-guide-to-getting-started/" },
+  { cat:"craft", title:"Lean and Clean vs. Drape and Shape", author:"Put This On", source:"putthison.com", time:"10 min",
+    desc:"The two fundamental silhouette philosophies in menswear — tailored versus relaxed. Understanding which you instinctively prefer is one of the most useful things you can do for your wardrobe.",
+    url:"https://putthison.com/lean-and-clean-vs-drape-and-shape/" },
+  { cat:"craft", title:"How to Mix Rough and Smooth — Double Denim and Texture", author:"Simon Crompton", source:"Permanent Style", time:"12 min",
+    desc:"Crompton on layering textures that would seem to clash. The broader lesson: contrasts make outfits interesting, rules make them predictable. Permanent Style is the most thoughtful voice in classic menswear.",
+    url:"https://www.permanentstyle.com/2024/11/how-to-do-double-denim-and-mixing-rough-and-smooth.html" },
+  { cat:"craft", title:"The Mr Porter Journal — Style Essentials", author:"Mr Porter Editorial", source:"mrporter.com/journal", time:"Ongoing",
+    desc:"The editorial arm of the world's best online menswear retailer. The Journal commissions real writers on style, fit, and culture. Browse the Style section to develop your eye — particularly strong on foundational pieces.",
+    url:"https://www.mrporter.com/en-gb/journal" },
+
+  // CULTURE — fashion as social force
+  { cat:"culture", title:"The Staying Power of Quiet Outdoor", author:"Highsnobiety", source:"Highsnobiety, 2024", time:"8 min",
+    desc:"Why the functional-gear aesthetic has outlasted every seasonal trend. On the difference between style and fashion, and what it means when utility becomes its own luxury signal.",
+    url:"https://www.highsnobiety.com/p/quiet-outdoor-trend-2024/" },
+  { cat:"culture", title:"Normcore's Influence Is Still Alive", author:"Highsnobiety", source:"Highsnobiety, 2024", time:"8 min",
+    desc:"The anti-trend that became a philosophy. Normcore argued that deliberate ordinariness is more interesting than conspicuous styling — a useful framework for understanding where considered menswear is heading.",
+    url:"https://www.highsnobiety.com/p/what-is-normcore/" },
+  { cat:"culture", title:"What We Wear: A Reading List on Fashion and Clothes", author:"Sara Tatyana Bernstein", source:"Longreads, 2022", time:"20 min",
+    desc:"A curated essay-and-reading-list on fashion's relationship to identity, class, and power. A jumping-off point for deeper reading — follow any link that grabs you. Longreads at its most useful.",
+    url:"https://longreads.com/2022/03/10/fashion-clothing-reading-list/" },
+  { cat:"culture", title:"GQ Style — The Basics, Revisited", author:"GQ", source:"GQ Magazine", time:"Ongoing",
+    desc:"GQ at its best focuses on foundational menswear: what to own, how to wear it, and why it matters. Filter out trend pieces and focus on their long-reads on suits, outerwear, and proportion. The canonical male style magazine, taken seriously.",
+    url:"https://www.gq.com/style" },
+
+  // IDENTITY — style as self
+  { cat:"identity", title:"Tastemaxxing — What Does It Mean to Have Taste?", author:"Marck Lund-Nielsen", source:"Fake Plastic Brands", time:"10 min",
+    desc:"The argument: real taste is cultivated through exposure, friction, and rejection of easy consensus — not through algorithmic curation. Lund-Nielsen makes the case for actively building a point of view rather than inheriting one.",
+    url:"https://www.instagram.com/fakeplasticbrands" },
+  { cat:"identity", title:"Derek Guy's Archive — Die, Workwear!", author:"Derek Guy (@dieworkwear)", source:"Substack", time:"Ongoing",
+    desc:"The most influential menswear writing on the internet. Guy covers the intersection of style, class, and culture — from Japanese workwear to Ivy League aesthetics to the sociology of getting dressed. Pick any five and read. His analysis of why people wear what they wear is genuinely rigorous.",
+    url:"https://dieworkwear.substack.com/" },
+  { cat:"identity", title:"The Language of Clothes — Key Ideas", author:"Alison Lurie", source:"Via Longreads Fashion Archive", time:"15 min",
+    desc:"Lurie's central argument: clothing is a communication system with its own grammar and vocabulary. What you wear sends messages you may not intend. Essential theoretical grounding for the Sherlock Principle — if clothes are a language, fluency means being able to read it and speak it deliberately.",
+    url:"https://longreads.com/tag/fashion/" },
+
+  // READING PEOPLE through clothes
+  { cat:"reading", title:"What Clothes Tell Us About Power", author:"Robin Givhan", source:"Washington Post", time:"15 min",
+    desc:"Givhan is the Pulitzer Prize–winning fashion critic at the Washington Post. Her pieces treat clothes as political documents — what politicians, executives, and public figures signal through dress. A masterclass in applied observation: the Sherlock method applied to the front page.",
+    url:"https://www.washingtonpost.com/people/robin-givhan/" },
+  { cat:"reading", title:"Connections Between Fashion and Social Class", author:"The Guardian Fashion", source:"The Guardian", time:"Ongoing",
+    desc:"The Guardian's fashion criticism goes beyond trends to class, identity, and politics. Their fashion desk — particularly Jess Cartner-Morley — treats style as a social document. Good for understanding fashion as a power system, not just an aesthetic one.",
+    url:"https://www.theguardian.com/fashion" },
+  { cat:"reading", title:"Highsnobiety's New Luxury — New Rules Report", author:"Highsnobiety", source:"Highsnobiety, 2024", time:"25 min",
+    desc:"An annual deep-dive on how the relationship between fashion, culture, and money is shifting. Who the new tastemakers are, what signals luxury now, and why the old markers are losing their grip. Useful for understanding the cultural moment you're dressing into.",
+    url:"https://www.highsnobiety.com" },
+];
+
+const STYLE_ARTICLE_CATS = [
+  { id:"all", label:"All" },
+  { id:"craft", label:"Craft" },
+  { id:"culture", label:"Culture" },
+  { id:"identity", label:"Identity" },
+  { id:"reading", label:"Reading People" },
+];
+
+let activeStyleCat = "all";
+
+function renderStyleArticles() {
+  const scatClass = { craft:"scat-craft", culture:"scat-culture", identity:"scat-identity", reading:"scat-reading" };
+  const scatLabel = { craft:"Craft", culture:"Culture", identity:"Identity", reading:"Reading People" };
+
+  document.getElementById('styleArticleFilters').innerHTML = STYLE_ARTICLE_CATS.map(c =>
+    `<button class="af-btn${c.id === activeStyleCat ? ' active' : ''}" onclick="filterStyleArticles('${c.id}')">${c.label}</button>`
+  ).join('');
+
+  const visible = activeStyleCat === "all" ? STYLE_ARTICLES : STYLE_ARTICLES.filter(a => a.cat === activeStyleCat);
+  document.getElementById('styleArticleGrid').innerHTML = visible.map(a => `
+    <div class="article-card">
+      <div class="article-top">
+        <span class="article-cat ${scatClass[a.cat] || 'scat-craft'}">${scatLabel[a.cat] || a.cat}</span>
+        <span class="article-time">~${a.time}</span>
+      </div>
+      <div class="article-title">${a.title}</div>
+      <div class="article-author">${a.author} · <span style="font-style:italic;">${a.source}</span></div>
+      <div class="article-desc">${a.desc}</div>
+      ${a.url ? `<a href="${a.url}" target="_blank" class="article-link">Read →</a>` : `<span class="article-link" style="color:var(--text-muted);">Search online</span>`}
+    </div>
+  `).join('');
+}
+
+function filterStyleArticles(cat) {
+  activeStyleCat = cat;
+  renderStyleArticles();
+}
+
+function renderStyle() {
+  document.getElementById('styleCurators').innerHTML = STYLE_CURATORS.map(c => `
+    <div class="style-card">
+      <div class="style-card-top">
+        <div class="style-name">${c.name}</div>
+        <span class="style-angle ${c.angleClass}">${c.angle}</span>
+      </div>
+      <div class="style-desc">${c.desc}</div>
+      <a href="${c.url}" target="_blank" class="style-link">@${c.handle} →</a>
+    </div>
+  `).join('');
+
+  document.getElementById('stylePrinciples').innerHTML = STYLE_PRINCIPLES.map(p => `
+    <div class="principle-card">
+      <div class="principle-num">${p.num}</div>
+      <div class="principle-title">${p.title}</div>
+      <div class="principle-desc">${p.desc}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('styleBooks').innerHTML = STYLE_BOOKS.map(s => `
+    <div class="genre-card">
+      <div class="genre-header"><div class="dot" style="background:${s.color}"></div><div class="genre-name">${s.name}</div></div>
+      ${s.recs.map(r => `
+        <div class="rec-item">
+          <div class="rec-title">${r.url ? `<a href="${r.url}" target="_blank">${r.title}</a>` : r.title}</div>
+          <div class="rec-meta"><span class="tag">${r.type}</span><span>${r.author}</span></div>
+        </div>`).join('')}
+    </div>
+  `).join('');
+}
+
+// ─── JULY 2026 CURATED PICKS (one per day of month) ─────────────────────────
+const MONTHLY_PICKS = {
+  1:  { title:"The Discovery of India", source:"Jawaharlal Nehru", type:"Book", url:null,
+        body:"Nehru wrote this in prison. A civilisational self-examination from the man who would shape the republic. Start with the chapter on the Indus Valley — it will change how you understand the subcontinent you come from." },
+  2:  { title:"Samsara (2011)", source:"Ron Fricke", type:"Film", url:"https://letterboxd.com/film/samsara-2011/",
+        body:"Pure image and sound, no dialogue. Shot over five years across 25 countries. Connects the sacred and the industrial, the human and the earth. Watch it as you'd listen to music." },
+  3:  { title:"Sapiens — Chapters 1–3", source:"Yuval Noah Harari", type:"Book", url:null,
+        body:"Harari's opening move: how Homo sapiens outlasted every other human species. Dark, fast, and disorienting in the best way. You'll finish chapter 3 and want to call someone." },
+  4:  { title:"The Power of Myth — Episode 1", source:"Joseph Campbell & Bill Moyers (PBS, 1988)", type:"Video", url:"https://www.youtube.com/results?search_query=power+of+myth+campbell+moyers+episode+1",
+        body:"Six conversations between a journalist and the man who mapped the world's stories. Campbell connects Hindu mythology, Greek tragedy, Star Wars, and Jungian psychology into one unified vision. Free on YouTube." },
+  5:  { title:"The Anarchy — Chapter 1", source:"William Dalrymple", type:"Book", url:null,
+        body:"How the East India Company — a private corporation — conquered an entire subcontinent. The most important Indian history book for understanding today's world. The first chapter reads like a thriller." },
+  6:  { title:"When Breath Becomes Air", source:"Paul Kalanithi", type:"Book", url:null,
+        body:"A neurosurgeon faces terminal cancer and writes about what makes a life worth living. Read it in one sitting. Then sit with it." },
+  7:  { title:"The Fog of War (2003)", source:"Errol Morris", type:"Film", url:"https://letterboxd.com/film/the-fog-of-war/",
+        body:"Robert McNamara, U.S. Secretary of Defense during Vietnam, confesses. 11 lessons from a man who helped plan the firebombing of Tokyo. The most unsettling documentary about power ever made." },
+  8:  { title:"Orientalism — Introduction", source:"Edward Said", type:"Book", url:null,
+        body:"Said argues that the West constructed 'the East' as a concept to dominate it. As an Indian student of IR, this is non-negotiable reading. It will change how you read everything else — every news article, every textbook." },
+  9:  { title:"Kind of Blue", source:"Miles Davis, 1959", type:"Album", url:"https://open.spotify.com/album/1weenld61qoidwYuZ1GESA",
+        body:"The best-selling jazz album ever. Modal jazz — Davis replaced chord progressions with scales, giving musicians space to breathe. Put it on and let it run. Then read about how it was recorded: one take, no rehearsals." },
+  10: { title:"Blueprint for Armageddon — Episode I", source:"Dan Carlin's Hardcore History", type:"Podcast", url:"https://www.dancarlin.com/hardcore-history-series/",
+        body:"Six episodes, 24 hours total, on the First World War. The most immersive history content ever produced. Start Episode I. You will cancel plans to keep listening. History stops being abstract." },
+  11: { title:"No End in Sight (2007)", source:"Charles Ferguson", type:"Film", url:"https://letterboxd.com/film/no-end-in-sight/",
+        body:"The inside story of how America dismantled Iraq after 2003 — told by the people in the room. Essential IR viewing: what happens when ideology overrides expertise, with consequences that outlive every administration." },
+  12: { title:"Autobiography of a Yogi — Chapters 1–5", source:"Paramahansa Yogananda", type:"Book", url:null,
+        body:"Yogananda describes his childhood in Bengal with a matter-of-factness about miracles that is completely disarming. By chapter 5 you'll understand why Steve Jobs had this on his iPad and read it every year." },
+  13: { title:"Midnight's Children — Opening", source:"Salman Rushdie", type:"Book", url:null,
+        body:"A boy born at the exact moment of Indian independence. Rushdie uses magic realism to tell the story of a nation being born. The prose alone is worth studying — read the opening paragraph three times." },
+  14: { title:"Abstract: The Art of Design — Ilse Crawford", source:"Netflix", type:"Video", url:"https://www.netflix.com/title/80057883",
+        body:"Each episode shows a designer's complete thinking process. The Crawford episode (interior design) is about how spaces shape human behaviour and dignity. Connects directly to your Paul Stout interest in how built environments form us." },
+  15: { title:"The Great Partition — Chapter 1", source:"Yasmin Khan", type:"Book", url:null,
+        body:"August 1947: fourteen million people displaced in six weeks. Khan restores individual stories to the largest mass migration in history. Essential for any Indian student of politics — and a reminder that borders are human decisions, not facts." },
+  16: { title:"Rag Yaman — Ravi Shankar", source:"Indian classical music", type:"Album", url:"https://open.spotify.com/search/ravi%20shankar%20yaman",
+        body:"The evening raga. Twenty to thirty minutes of pure development from the seed of a single scale. Listen with the intention of following the melody, not judging it. This is devotional practice in sound — connects directly to your Vedanta reading." },
+  17: { title:"Manufacturing Consent (1992) — First Hour", source:"Mark Achbar & Peter Wintonick", type:"Film", url:"https://www.youtube.com/results?search_query=manufacturing+consent+1992",
+        body:"Three hours of Chomsky explaining how media systems manufacture agreement rather than inform. Dense and essential. His propaganda model will stay with you in every press conference and op-ed you ever encounter." },
+  18: { title:"Letters to a Young Poet", source:"Rainer Maria Rilke", type:"Book", url:null,
+        body:"Ten letters from Rilke to a 19-year-old asking how to live as a writer. The most useful thing ever written for a young person figuring out what they want. 80 pages — read all ten in one sitting." },
+  19: { title:"The Century of the Self — Episode 1", source:"Adam Curtis, BBC (2002)", type:"Video", url:"https://www.youtube.com/results?search_query=century+of+the+self+adam+curtis+episode+1",
+        body:"How Freud's nephew Edward Bernays invented public relations and modern consumerism by applying psychoanalysis to mass persuasion. Understand how the world you live in was designed — and by whom, and why." },
+  20: { title:"Vivekananda: A Biography", source:"Swami Nikhilananda", type:"Book", url:null,
+        body:"Not the speeches — the life. Vivekananda's encounters with poverty, with Ramakrishna, with America and Britain. A young man carrying an ancient tradition into a hostile modern world. You'll recognise yourself in it." },
+  21: { title:"Jiro Dreams of Sushi (2011)", source:"David Gelb", type:"Film", url:"https://letterboxd.com/film/jiro-dreams-of-sushi/",
+        body:"85-year-old Jiro Ono has been making sushi in a Tokyo basement for 60 years. This film is not about sushi. It's about what it means to commit to a craft completely. Watch it when you need to remember why quality matters." },
+  22: { title:"The Wretched of the Earth — Chapter 1", source:"Frantz Fanon", type:"Book", url:null,
+        body:"Fanon's 1961 study of colonialism's psychological violence, written as Algeria fought for independence. The essential anti-colonial text after Said — and Sartre's preface is itself extraordinary. Required reading for IR." },
+  23: { title:"Planet Earth II — Cities", source:"BBC, David Attenborough", type:"Video", url:null,
+        body:"The Cities episode follows urban wildlife through Mumbai, Singapore, Nairobi, and Havana. It reframes cities as ecosystems — every building a cliff face, every street a river. Connects your urban design and ecology interests in one hour." },
+  24: { title:"The Remains of the Day", source:"Kazuo Ishiguro", type:"Book", url:null,
+        body:"A butler looking back at his life in service, realising what he sacrificed for duty. The quietest, most devastating study of repression in English fiction. Ishiguro does more with restraint than most writers do with full volume." },
+  25: { title:"What I Talk About When I Talk About Running", source:"Haruki Murakami", type:"Book", url:null,
+        body:"Murakami on running marathons, writing novels, and how physical endurance shapes creative work. Short, deeply personal, and a model for thinking about discipline and craft — how you build the life you want through daily commitment." },
+  26: { title:"The Shock Doctrine — Introduction", source:"Naomi Klein", type:"Book", url:null,
+        body:"How economic 'shock therapy' was imposed on crisis-hit countries — Chile, Russia, Iraq — to push through radical free-market policies. Essential for an IR student. The opening chapter on psychological shock research is unforgettable." },
+  27: { title:"Pather Panchali (1955)", source:"Satyajit Ray", type:"Film", url:"https://letterboxd.com/film/pather-panchali/",
+        body:"The first film of the Apu Trilogy. Shot on nothing, in the countryside of Bengal, about a boy growing up in poverty. The greatest Indian film ever made. This is your cinema inheritance — watch it before you watch another Hollywood film." },
+  28: { title:"The Bhagavad Gita — Chapter 2: Sankhya Yoga", source:"Trans. Eknath Easwaran", type:"Book", url:null,
+        body:"Not as religious text but as philosophy of action. Arjuna is paralysed — duty conflicts with love. Krishna's response is the oldest and deepest answer to how to act under uncertainty. Read the Easwaran translation; it reads like a conversation." },
+  29: { title:"Civilisations — Episode 1: How Do We Look", source:"Simon Schama, BBC (2018)", type:"Video", url:"https://www.bbc.co.uk/programmes/b08mflgk",
+        body:"Schama on the first human images ever made — from Chauvet Cave to ISIS destroying ancient statues. The best art history television made. Watch it, then go read about the Venus of Willendorf. Art and power have always been the same question." },
+  30: { title:"How Europe Underdeveloped Africa — Chapters 1–2", source:"Walter Rodney", type:"Book", url:null,
+        body:"Rodney argues that African 'underdevelopment' is not a natural condition but a direct product of European extraction. Written in 1972, it remains the essential counter-narrative to Western development economics. The first two chapters are enough to shift your frame." },
+  31: { title:"Baraka (1992)", source:"Ron Fricke", type:"Film", url:"https://letterboxd.com/film/baraka/",
+        body:"Fricke's predecessor to Samsara — 70 minutes, no words, pure image. Monks, factories, sacred sites, mass graves. The closest cinema has come to a meditation on what we are and what we are doing to each other and the planet." }
+};
+
+function loadAIPick() {
+  const el = document.getElementById('ai-body');
+  const day = new Date().getDate();
+  const pick = MONTHLY_PICKS[day];
+  if (!pick) { el.textContent = 'No pick for today.'; return; }
+  const tag = `<span style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;background:var(--tag-bg);color:var(--text-muted);padding:2px 7px;border-radius:10px;margin-right:6px;">${pick.type}</span>`;
+  const titleLine = pick.url
+    ? `${tag}<a href="${pick.url}" target="_blank" style="font-weight:600;color:var(--accent);text-decoration:none;">${pick.title}</a>`
+    : `${tag}<strong>${pick.title}</strong>`;
+  const sourceLine = `<span style="font-size:11px;color:var(--text-muted);display:block;margin:3px 0 8px;">— ${pick.source}</span>`;
+  el.innerHTML = titleLine + sourceLine + pick.body;
+  el.classList.add('loaded');
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────
+initDate();
+renderToday();
+renderGenres();
+renderCinema();
+renderBooks();
+renderMusic();
+renderNews();
+renderArticles();
+renderStyle();
+renderStyleArticles();
+renderCurators();
+loadAIPick();
+</script>
+</body>
+</html>
