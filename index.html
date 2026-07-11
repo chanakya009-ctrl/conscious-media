@@ -154,6 +154,7 @@ header { padding: 18px 24px 12px; border-bottom: 1px solid var(--border); displa
 .cat-india    { background: #f8f0e0; color: #8b6a1a; }
 .cat-nature   { background: #eaf2e8; color: #3a6a3a; }
 .cat-religion { background: #f5e8d0; color: #7a5010; }
+.cat-theory   { background: #f0e8f5; color: #6a3a8a; }
 
 /* STYLE TAB */
 .style-curators { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; margin-bottom: 22px; }
@@ -530,8 +531,8 @@ const MUSIC_CURATORS = [
 
 const MUSIC_PATHWAYS = [
   { genre:"Jazz & Soul", color:"#3d5a8a", entries:[
-    { title:"Kind of Blue", artist:"Miles Davis", why:"The most perfect jazz album. Start here, always." },
-    { title:"A Love Supreme", artist:"John Coltrane", why:"Devotional jazz. Connects directly to your Eastern philosophy reading — this is worship in sound." },
+    { title:"Mingus Ah Um", artist:"Charles Mingus, 1959", why:"The most structurally ambitious jazz album of its era — blues, swing, gospel, and political fury in one record. More complex than it sounds and twice as gutsy. Start with 'Better Git It in Your Soul'." },
+    { title:"Giant Steps", artist:"John Coltrane, 1960", why:"Coltrane's harmonic revolution — he invented a new chord progression system ('Coltrane changes') that broke everything that came before it. More cerebral and more intense than what you've heard. The title track is one of the most technically demanding pieces in jazz history." },
     { title:"Nina Simone at Carnegie Hall", artist:"Nina Simone", why:"Power, protest, and total mastery. A force of nature on stage." },
   ]},
   { genre:"Indian Classical", color:"#b8720a", entries:[
@@ -587,6 +588,7 @@ const ALL_CURATORS = [
   { name:"khaihastaste", desc:"Taste-led curation — the name says it all. Follow for the editorial sensibility as much as the specific picks.", url:"https://www.instagram.com/khaihastaste", type:"Instagram", tags:["Taste","Curation"] },
   { name:"Frankie Statham", desc:"UK musician and music curator posting cosy morning soundtracks, jazz picks, and mood-matched listening. Great for slow Sunday sessions and broadening into British indie and jazz-adjacent sounds.", url:"https://www.instagram.com/frankiestathamuk", type:"Instagram", tags:["Music","Jazz","Indie"] },
   { name:"Fake Plastic Brands", desc:"Marck Lund-Nielsen's Copenhagen brand consultancy turned cultural commentary. His 'Tastemaxxing' series is essential — on how to develop genuine taste versus algorithmic taste. One of the better thinkers on what it means to have a point of view.", url:"https://www.instagram.com/fakeplasticbrands", type:"Instagram", tags:["Design","Taste","Branding","Culture"] },
+  { name:"Eva in the News", desc:"Books-and-current-affairs curator — reading recommendations filtered through what's happening in the world. Posts include book reviews, reading lists, and essays connecting literature to the news cycle. Has a Substack. A rare voice that treats books and journalism as the same project.", url:"https://www.instagram.com/evainthenews", type:"Instagram", tags:["Reading","Books","Current Affairs","Essays"] },
 ];
 
 const DAILY_PICKS = [
@@ -904,7 +906,22 @@ const ARTICLES = [
 
   // NATURE
   { cat:"nature", title:"The Sixth Extinction", author:"Elizabeth Kolbert", source:"The New Yorker, 2009", time:"30 min", desc:"The original New Yorker article that preceded the book. Kolbert documents the end-Pleistocene extinctions and what they tell us about the present mass die-off. Science journalism at its absolute best.", url:"https://www.newyorker.com/magazine/2009/05/25/the-sixth-extinction" },
-  { cat:"nature", title:"Braiding Sweetgrass — The Skywoman Falling", author:"Robin Wall Kimmerer", source:"Milkweed Editions (excerpt)", time:"20 min", desc:"The first chapter of Braiding Sweetgrass — the Potawatomi creation story versus the Genesis story, and what each says about humanity's relationship to the earth. The most beautiful opening chapter in contemporary non-fiction.", url:"https://milkweed.org/book/braiding-sweetgrass" },
+  { cat:"nature", title:"The Serviceberry: An Economy of Abundance", author:"Robin Wall Kimmerer", source:"Emergence Magazine, 2020", time:"20 min", desc:"Kimmerer's alternative to the extractive economy — using the serviceberry tree as a model for how a gift economy works in nature. The same lyrical intelligence as Braiding Sweetgrass but focused on what economic life could look like if it took its cues from ecosystems rather than markets. One of the most quietly radical essays in contemporary non-fiction.", url:"https://emergencemagazine.org/essay/the-serviceberry/" },
+  { cat:"nature", title:"A Life on Our Planet: My Witness Statement", author:"David Attenborough", source:"WWF, 2020", time:"15 min", desc:"Attenborough's first-person account of watching the wild world contract over 93 years of filmmaking — from 66% wilderness when he was born to 35% today. Not alarmist, just honest. His vision of a nature-positive future is the most credible roadmap we have from someone who has seen the whole arc. Companion to the Netflix documentary of the same name.", url:"https://www.wwf.org.uk/updates/david-attenborough-life-our-planet" },
+  { cat:"nature", title:"Jane Goodall: A Scientist in the Field", author:"National Geographic", source:"nationalgeographic.com", time:"15 min", desc:"The woman who redefined primatology by living among chimpanzees for 60 years — discovering they use tools, form alliances, wage war, and mourn their dead. She broke every rule of field biology (named the chimps, described their emotions, formed friendships) and was right about all of it. Her original 1960 National Geographic article changed what a scientist could be.", url:"https://www.nationalgeographic.com/animals/article/jane-goodall" },
+  { cat:"nature", title:"Steve Irwin's Conservation Legacy, 15 Years On", author:"Natural History Museum", source:"nhm.ac.uk, 2021", time:"10 min", desc:"The Crocodile Hunter was dismissed by critics as a showman. What he actually built: 330,000 acres of wildlife corridors preserved, a rescue zoo that rehomed thousands of animals, and an international audience taught to love animals they had been conditioned to fear. The case for why enthusiasm for wildlife is a conservation strategy, not just entertainment.", url:"https://www.nhm.ac.uk/discover/news/2021/september/15-years-since-steve-irwins-death-his-conservation-legacy-lives.html" },
+  { cat:"nature", title:"How Planet Earth II Was Made", author:"BBC Earth", source:"bbcearth.com, 2017", time:"12 min", desc:"The iguana-vs-snakes sequence in the Galapagos took six days of filming and 30 crew members. The snow leopard episode required cameras mounted on Himalayan cliffs at -20°C. The BBC Earth team's account of what it costs to show the natural world with total honesty — and why craft at this level matters for making people care. Watch Planet Earth II alongside.", url:"https://www.bbcearth.com/news/the-making-of-planet-earth-ii" },
+  { cat:"nature", title:"The Amazon Is Approaching a Tipping Point", author:"National Geographic", source:"nationalgeographic.com, 2019", time:"18 min", desc:"The Amazon is not just a forest — it is a weather system that generates its own rainfall, a carbon sink holding 150 billion tonnes of carbon, and home to 10% of all species on Earth. National Geographic's account of what happens at the tipping point when enough forest is cleared that it can no longer produce enough moisture to sustain itself. The most consequential environmental threshold on the planet, explained.", url:"https://www.nationalgeographic.com/environment/article/amazon-tipping-point" },
+
+  // POLITICAL THEORY — Schools of Thought
+  { cat:"theory", title:"A Room of One's Own — Chapter I", author:"Virginia Woolf", source:"Hogarth Press, 1929", time:"25 min", desc:"Woolf's foundational feminist argument, delivered as a lecture at Cambridge in 1928: a woman must have money and a room of her own to write — and by extension, to think. The clearest account ever written of how material conditions determine intellectual freedom. Read this before any other feminist theory.", url:"https://gutenberg.net.au/ebooks02/0200791h.html" },
+  { cat:"theory", title:"The Master's Tools Will Never Dismantle the Master's House", author:"Audre Lorde", source:"Sister Outsider, 1979", time:"8 min", desc:"Five pages that define intersectional feminism more precisely than any book: you cannot use the structures of oppression to dismantle them. Lorde wrote it to challenge a feminist conference that had excluded Black women from its agenda. Short, devastating, and still the sharpest political essay written by an American woman.", url:"https://collectiveliberation.org/wp-content/uploads/2013/01/Lorde_The_Masters_Tools.pdf" },
+  { cat:"theory", title:"Why Socialism?", author:"Albert Einstein", source:"Monthly Review, May 1949", time:"12 min", desc:"In 1949, the most recognisable scientist in the world argued that capitalism produces 'the crippling of the individual' through economic anxiety, and that a planned economy is the rational alternative. Einstein on economic structure — not a slogan but an argument. Compelling because it comes from someone with no political career at stake.", url:"https://monthlyreview.org/2009/05/01/why-socialism/" },
+  { cat:"theory", title:"The Communist Manifesto", author:"Karl Marx & Friedrich Engels", source:"1848 — Marxists.org", time:"45 min", desc:"The most influential political pamphlet in history. Read the original before reading about it. The analysis of capitalism — alienation, class struggle, the commodification of labour — is still the most structurally coherent critique of market societies ever written. Whether you accept the conclusion or not, you cannot understand the 20th century without it.", url:"https://www.marxists.org/archive/marx/works/1848/communist-manifesto/" },
+  { cat:"theory", title:"Capitalism: The Free Market System Explained", author:"Britannica", source:"britannica.com", time:"10 min", desc:"The clearest neutral entry to capitalism: private property rights, price signals, profit incentive, capital accumulation, and how they coordinate without central planning. So normalised it rarely gets explained — here it is explained. Read this before Adam Smith, before Marx, before any economic argument that assumes you already know the system's logic.", url:"https://www.britannica.com/topic/capitalism" },
+  { cat:"theory", title:"Karl Polanyi and the Myth of the Self-Regulating Market", author:"George Monbiot", source:"The Guardian, October 2013", time:"12 min", desc:"Monbiot introduces Polanyi's central argument from The Great Transformation (1944): markets are not natural or self-regulating — they were built by states, and when they expand without social limits, they destroy the communities that contain them. Economic structuralism in plain language. Polanyi explains austerity, the 2008 crash, and the political backlash better than any mainstream economist.", url:"https://www.theguardian.com/commentisfree/2013/oct/19/karl-polanyi-great-transformation-capitalism" },
+  { cat:"theory", title:"What Is Democratic Socialism?", author:"BBC News", source:"bbc.co.uk", time:"8 min", desc:"The BBC's clean explainer on what separates democratic socialism (public ownership of the means of production, achieved through democratic elections) from social democracy (managing capitalism better through redistribution). The distinction matters enormously: one is reform, one is replacement. Read this before the next election cycle.", url:"https://www.bbc.co.uk/news/uk-politics-45098550" },
+  { cat:"theory", title:"The Origins of Religious Fundamentalism", author:"BBC Religion", source:"bbc.co.uk/religion", time:"12 min", desc:"The word 'fundamentalism' was coined in 1920 for American Protestant Christianity, then applied — controversially — to Islam, Hinduism, and Judaism. The BBC's account of what all fundamentalisms share: a sense of civilisational siege, a belief that sacred texts must be read literally, and a rejection of modernity's authority to determine truth. Essential context for reading any 21st-century geopolitical conflict.", url:"https://www.bbc.co.uk/religion/religions/islam/subdivisions/fundamentalism_1.shtml" },
 ];
 
 const ARTICLE_CATS = [
@@ -918,6 +935,7 @@ const ARTICLE_CATS = [
   { id:"geo", label:"Geopolitics" },
   { id:"nature", label:"Nature" },
   { id:"religion", label:"Religion" },
+  { id:"theory", label:"Theory" },
 ];
 
 let activeArticleCat = "all";
@@ -929,8 +947,8 @@ function renderArticles() {
   ).join('');
   // Grid
   const visible = activeArticleCat === "all" ? ARTICLES : ARTICLES.filter(a => a.cat === activeArticleCat);
-  const catClass = { power:"cat-power", history:"cat-history", phil:"cat-phil", ideas:"cat-ideas", culture:"cat-culture", film:"cat-film", geo:"cat-geo", india:"cat-india", nature:"cat-nature", religion:"cat-religion" };
-  const catLabel = { power:"Power", history:"History", phil:"Philosophy", ideas:"Ideas", culture:"Culture", film:"Film", geo:"Geopolitics", india:"India", nature:"Nature", religion:"Religion" };
+  const catClass = { power:"cat-power", history:"cat-history", phil:"cat-phil", ideas:"cat-ideas", culture:"cat-culture", film:"cat-film", geo:"cat-geo", india:"cat-india", nature:"cat-nature", religion:"cat-religion", theory:"cat-theory" };
+  const catLabel = { power:"Power", history:"History", phil:"Philosophy", ideas:"Ideas", culture:"Culture", film:"Film", geo:"Geopolitics", india:"India", nature:"Nature", religion:"Religion", theory:"Political Theory" };
   document.getElementById('articleGrid').innerHTML = visible.map(a => `
     <div class="article-card">
       <div class="article-top">
@@ -1132,8 +1150,8 @@ const MONTHLY_PICKS = {
         body:"Robert McNamara, U.S. Secretary of Defense during Vietnam, confesses. 11 lessons from a man who helped plan the firebombing of Tokyo. The most unsettling documentary about power ever made." },
   8:  { title:"Orientalism — Introduction", source:"Edward Said", type:"Book", url:null,
         body:"Said argues that the West constructed 'the East' as a concept to dominate it. As an Indian student of IR, this is non-negotiable reading. It will change how you read everything else — every news article, every textbook." },
-  9:  { title:"Kind of Blue", source:"Miles Davis, 1959", type:"Album", url:"https://open.spotify.com/album/1weenld61qoidwYuZ1GESA",
-        body:"The best-selling jazz album ever. Modal jazz — Davis replaced chord progressions with scales, giving musicians space to breathe. Put it on and let it run. Then read about how it was recorded: one take, no rehearsals." },
+  9:  { title:"Head Hunters", source:"Herbie Hancock, 1973", type:"Album", url:"https://open.spotify.com/search/herbie%20hancock%20head%20hunters",
+        body:"The moment jazz became funk. Hancock brought in electric keyboards, synthesizers, and a groove heavy enough to change what a jazz band could sound like. The opening track 'Chameleon' is 15 minutes of pure invention. The best-selling jazz album of the 1970s — and Miles Davis's favourite record." },
   10: { title:"Blueprint for Armageddon — Episode I", source:"Dan Carlin's Hardcore History", type:"Podcast", url:"https://www.dancarlin.com/hardcore-history-series/",
         body:"Six episodes, 24 hours total, on the First World War. The most immersive history content ever produced. Start Episode I. You will cancel plans to keep listening. History stops being abstract." },
   11: { title:"No End in Sight (2007)", source:"Charles Ferguson", type:"Film", url:"https://letterboxd.com/film/no-end-in-sight/",
