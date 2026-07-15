@@ -1137,7 +1137,13 @@ window.exitSim=()=>{
 
 // legend
 const legend=L.control({position:"bottomleft"});
-legend.onAdd=()=>{const d=L.DomUtil.create("div","legend");d.innerHTML=`<b>Risk score</b><br><i style="background:${riskColor(20)}"></i>Good &lt;30<br><i style="background:${riskColor(40)}"></i>Fair 30–49<br><i style="background:${riskColor(60)}"></i>Poor 50–69<br><i style="background:${riskColor(80)}"></i>Critical ≥70<br><span style="color:#8b98a9">size = footfall<br>faded/dashed = modeled, unverified<br>solid = citizen-verified / audited</span>`;return d};
+let LEG_OPEN=window.innerWidth>=900; // collapsed by default on phones so the map stays visible
+legend.onAdd=()=>{const d=L.DomUtil.create("div","legend");
+  const body=`<i style="background:${riskColor(20)}"></i>Good &lt;30<br><i style="background:${riskColor(40)}"></i>Fair 30–49<br><i style="background:${riskColor(60)}"></i>Poor 50–69<br><i style="background:${riskColor(80)}"></i>Critical ≥70<br><span style="color:#8b98a9">size = footfall<br>faded/dashed = modeled, unverified<br>solid = citizen-verified / audited</span>`;
+  d.innerHTML=`<b id="legHead" style="cursor:pointer;user-select:none">Risk score ${LEG_OPEN?"▾":"▸"}</b><div id="legBody" style="display:${LEG_OPEN?"block":"none"}">${body}</div>`;
+  d.querySelector("#legHead").onclick=()=>{LEG_OPEN=!LEG_OPEN;d.querySelector("#legBody").style.display=LEG_OPEN?"block":"none";d.querySelector("#legHead").textContent="Risk score "+(LEG_OPEN?"▾":"▸")};
+  L.DomUtil.disableClickPropagation(d);
+  return d};
 legend.addTo(map);
 function refreshLegend(){legend.remove();legend.addTo(map)}
 function resetCoverage(){COVCACHE=null;if(gapLayer){map.removeLayer(gapLayer);gapLayer=null;if(gapsOn){gapsOn=false;document.getElementById("fGaps").classList.remove("on")}}}
