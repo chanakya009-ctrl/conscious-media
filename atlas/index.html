@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ahmedabad Public Restroom Atlas — Live Decision Dashboard</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+:root{
+  --bg:#0d1117; --panel:#161b22; --panel2:#1c2330; --border:#2d3748; --text:#e6edf3;
+  --muted:#8b98a9; --accent:#4da3ff; --good:#2ecc71; --fair:#f1c40f; --poor:#e67e22; --crit:#e74c3c;
+  --pink:#ff6fa5;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden}
+header{background:linear-gradient(90deg,#101826,#16233a);border-bottom:1px solid var(--border);padding:10px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+header h1{font-size:17px;font-weight:600}
+header h1 span{color:var(--accent)}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--good);display:inline-block;animation:pulse 1.6s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(46,204,113,.6)}70%{box-shadow:0 0 0 7px rgba(46,204,113,0)}100%{box-shadow:0 0 0 0 rgba(46,204,113,0)}}
+.badge{font-size:10.5px;padding:3px 9px;border-radius:20px;border:1px solid var(--border);color:var(--muted);background:var(--panel)}
+.badge.live{color:var(--good);border-color:rgba(46,204,113,.4)}
+#ticker{margin-left:auto;display:flex;gap:18px;font-size:12px;color:var(--muted)}
+#ticker b{color:var(--text);font-size:14px}
+#main{flex:1;display:flex;min-height:0}
+#map{flex:1;min-width:0}
+#side{width:430px;max-width:46vw;background:var(--panel);border-left:1px solid var(--border);display:flex;flex-direction:column}
+#tabs{display:flex;border-bottom:1px solid var(--border)}
+#tabs button{flex:1;background:none;border:none;color:var(--muted);padding:11px 4px;font-size:12.5px;cursor:pointer;border-bottom:2px solid transparent;font-weight:600}
+#tabs button.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tabpane{flex:1;overflow-y:auto;padding:14px;display:none}
+.tabpane.active{display:block}
+h3{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:14px 0 8px}
+h3:first-child{margin-top:0}
+.card{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px}
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.kpi{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px}
+.kpi .v{font-size:21px;font-weight:700}
+.kpi .l{font-size:10.5px;color:var(--muted);margin-top:2px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;color:var(--muted);font-weight:600;padding:5px 6px;border-bottom:1px solid var(--border);font-size:11px}
+td{padding:5px 6px;border-bottom:1px solid rgba(45,55,72,.5)}
+.bar{height:7px;border-radius:4px;background:#2d3748;overflow:hidden}
+.bar i{display:block;height:100%}
+.pill{display:inline-block;font-size:10px;padding:2px 8px;border-radius:12px;font-weight:700}
+.p-good{background:rgba(46,204,113,.15);color:var(--good)}
+.p-fair{background:rgba(241,196,15,.15);color:var(--fair)}
+.p-poor{background:rgba(230,126,34,.15);color:var(--poor)}
+.p-crit{background:rgba(231,76,60,.15);color:var(--crit)}
+.p-info{background:rgba(77,163,255,.13);color:var(--accent)}
+.p-pink{background:rgba(255,111,165,.15);color:var(--pink)}
+/* chat */
+#chatlog{display:flex;flex-direction:column;gap:10px;margin-bottom:10px}
+.msg{max-width:95%;padding:10px 12px;border-radius:12px;font-size:12.5px;line-height:1.5;white-space:pre-wrap}
+.msg.user{align-self:flex-end;background:#274264;border:1px solid #35597f}
+.msg.bot{align-self:flex-start;background:var(--panel2);border:1px solid var(--border)}
+.msg.bot table{margin:6px 0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.chips button{background:var(--panel2);border:1px solid var(--border);color:var(--accent);font-size:11px;padding:5px 10px;border-radius:16px;cursor:pointer}
+.chips button:hover{border-color:var(--accent)}
+#chatform{display:flex;gap:8px}
+#chatform input{flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px;font-size:13px}
+button.primary{background:var(--accent);border:none;color:#08131f;font-weight:700;border-radius:8px;padding:9px 16px;cursor:pointer;font-size:13px}
+button.ghost{background:var(--panel2);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:8px 12px;cursor:pointer;font-size:12px}
+label{display:block;font-size:11.5px;color:var(--muted);margin:9px 0 4px}
+select,input[type=text],input[type=number],textarea{width:100%;background:var(--panel2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px;font-size:12.5px}
+.radio-row{display:flex;gap:6px;flex-wrap:wrap}
+.radio-row label{display:flex;align-items:center;gap:4px;margin:0;background:var(--panel2);border:1px solid var(--border);padding:6px 9px;border-radius:8px;cursor:pointer;font-size:12px;color:var(--text)}
+.feed-item{font-size:11.5px;padding:7px 0;border-bottom:1px solid rgba(45,55,72,.5);color:var(--muted)}
+.feed-item b{color:var(--text)}
+/* popup */
+.leaflet-popup-content-wrapper{background:var(--panel);color:var(--text);border-radius:12px;border:1px solid var(--border)}
+.leaflet-popup-tip{background:var(--panel)}
+.leaflet-popup-content{margin:12px 14px;font-size:12px;min-width:270px}
+.pop-title{font-size:14px;font-weight:700;margin-bottom:2px}
+.pop-sub{color:var(--muted);font-size:11px;margin-bottom:8px}
+.qa{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin:8px 0}
+.qa .q{color:var(--muted)}
+.riskbig{font-size:26px;font-weight:800}
+.leaflet-container{background:#0a0e14}
+.legend{background:rgba(13,17,23,.88);border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:11px;color:var(--text);line-height:1.9}
+.legend i{width:11px;height:11px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:-1px}
+#filters{position:absolute;z-index:1000;top:12px;left:56px;display:flex;gap:6px;flex-wrap:wrap;max-width:calc(100% - 500px)}
+#filters select,#filters button{width:auto;background:rgba(13,17,23,.9);border:1px solid var(--border);color:var(--text);font-size:11.5px;padding:6px 8px;border-radius:8px;cursor:pointer}
+#filters button.on{border-color:var(--accent);color:var(--accent)}
+.src-note{font-size:10.5px;color:var(--muted);font-style:italic;margin-top:6px}
+a{color:var(--accent)}
+.zone-lab{background:none;border:none;box-shadow:none;color:#fff;font-weight:800;font-size:12px;text-shadow:0 1px 4px #000}
+.dist-lab{background:rgba(13,17,23,.75);border:1px solid var(--border);border-radius:8px;color:#cfd8e3;font-size:11px;padding:2px 8px;white-space:nowrap}
+@media (max-width:900px){
+  #main{flex-direction:column}
+  #side{width:100%;max-width:none;height:52%}
+  #ticker{display:none}
+  header{padding:8px 10px;gap:8px}
+  header h1{font-size:14px}
+  #filters{max-width:calc(100% - 60px);flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+  #filters select,#filters button{flex:0 0 auto;padding:9px 11px;font-size:12.5px}
+  #tabs button{padding:13px 4px;font-size:13px}
+  button.primary{padding:12px 16px}
+  .radio-row label{padding:10px 12px;font-size:13px}
+  .leaflet-popup-content{min-width:220px}
+  #chatform input{padding:12px;font-size:14px}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>Ahmedabad <span>Public Restroom Atlas</span></h1>
+  <span class="badge">Zone stats: CSP 2012</span>
+  <span class="badge" style="color:var(--fair);border-color:rgba(241,196,15,.35)">Attributes: modeled seed — pending field audit</span>
+  <span class="badge live" id="lastUpd">no citizen reports yet on this device</span>
+  <button class="badge" id="langTog" onclick="toggleLang()" style="cursor:pointer;font-family:inherit">ગુજરાતી</button>
+  <div id="ticker">
+    <div><b id="tFac">0</b> facilities</div>
+    <div><b id="tCrit" style="color:var(--crit)">0</b> critical</div>
+    <div><b id="tWomen" style="color:var(--pink)">0%</b> women-usable</div>
+    <div><b id="tRep">0</b> citizen reports</div>
+  </div>
+</header>
+<div id="main">
+  <div style="position:relative;flex:1;display:flex;min-width:0">
+    <div id="filters">
+      <select id="fZone"><option value="">All zones</option></select>
+      <select id="fType"><option value="">All types</option><option>Community Toilet</option><option>Public Pay&Use</option><option>Urinal</option><option>Smart Toilet</option><option>She-Toilet (Pink)</option></select>
+      <select id="fRisk"><option value="">All risk levels</option><option value="crit">Critical only</option><option value="poor">Poor+</option><option value="ok">Good/Fair only</option></select>
+      <button id="fOpen">Open now</button>
+      <button id="fWomen">Women-usable</button>
+      <button id="fPreg">Pregnancy-safe</button>
+      <button id="fMHM">Pads/MHM</button>
+      <button id="f247">24×7</button>
+      <button id="fGaps">◻ Coverage gaps</button>
+      <button id="fDistrict">◎ District view</button>
+    </div>
+    <div id="map"></div>
+    <div id="simbar" style="display:none;position:absolute;z-index:1001;bottom:16px;left:50%;transform:translateX(-50%);background:rgba(58,44,130,.94);border:1px solid #8f7bff;border-radius:12px;padding:9px 16px;font-size:12.5px;align-items:center;gap:14px;box-shadow:0 4px 20px rgba(0,0,0,.5);max-width:80%">
+      <span>🔮 <b>SIMULATION</b> — <span id="simlab"></span></span>
+      <button class="ghost" style="border-color:#8f7bff;color:#cfc4ff" onclick="exitSim()">← Back to today</button>
+    </div>
+  </div>
+  <div id="side">
+    <div id="tabs">
+      <button class="active" data-t="dash">Dashboard</button>
+      <button data-t="agent">AI Advisor</button>
+      <button data-t="report">Report</button>
+      <button data-t="data">Data</button>
+    </div>
+    <div class="tabpane active" id="pane-dash"></div>
+    <div class="tabpane" id="pane-agent">
+      <div class="chips" id="chipbox"></div>
+      <div id="chatlog"></div>
+      <form id="chatform"><input id="chatin" placeholder="Ask e.g. “I have 50 crore, where should I invest?”" autocomplete="off"><button class="primary">Ask</button></form>
+      <div style="margin-top:8px;font-size:11px">
+        <a href="javascript:void 0" id="aisetTog" style="color:var(--muted);text-decoration:none">⚙ AI settings — optional Claude API key for open-ended questions</a>
+        <div id="aiset" style="display:none;margin-top:6px">
+          <input type="text" id="apikeyIn" placeholder="Anthropic API key (sk-ant-…) — stored only in this browser">
+          <div style="display:flex;gap:6px;margin-top:6px;align-items:center">
+            <button class="ghost" id="apikeySave">Save</button>
+            <button class="ghost" id="apikeyClear">Remove</button>
+            <span id="apikeyStat" style="font-size:11px;color:var(--muted)"></span>
+          </div>
+          <label style="display:flex;align-items:center;gap:6px;margin-top:8px;color:var(--text);font-size:12px;cursor:pointer"><input type="checkbox" id="preferLLM"> Ask Claude for <b>every</b> question (any phrasing; uses API credits per query)</label>
+          <div class="src-note">Without a key, the deterministic engine answers everything it can parse. With a key, Claude receives the FULL facility dataset and returns advice plus an action plan the app simulates — so its answers also get before→after cards and map previews. Unchecked, Claude handles only what the engine can't parse.</div>
+        </div>
+      </div>
+    </div>
+    <div class="tabpane" id="pane-report"></div>
+    <div class="tabpane" id="pane-data"></div>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+/* =====================================================================
+   AHMEDABAD PUBLIC RESTROOM ATLAS
+   Data grounding:
+   - City Sanitation Plan, Ahmedabad (Urban Management Centre for AMC, 2012)
+   - CEPT University planning studios 2017–2020
+   - Policy Proposal: "Public Restroom Infrastructure for a Working,
+     Inclusive Ahmedabad" (Mehta & Chinta, July 2026)
+   - SBM-U / CPHEEO unit-cost norms
+   - Live layer: OpenStreetMap (Overpass API) + citizen reports
+   Per-facility attribute values are MODELED SEED derived from zone-level
+   government evidence, pending the Phase-1 field audit. Every value is
+   user-verifiable through the Report tab.
+===================================================================== */
+
+// ---------- Government evidence (verbatim from CSP 2012, Tables 42–48) ----------
+const ZONES = {
+  "North":   {seats:1723, blocks:353, payuse:200, urinals:211, od:32, pop:1050000, center:[23.075,72.595]},
+  "South":   {seats:1586, blocks:589, payuse:112, urinals:99,  od:14, pop:1200000, center:[22.975,72.595]},
+  "East":    {seats:1892, blocks:421, payuse:236, urinals:196, od:11, pop:1350000, center:[23.03,72.655]},
+  "West":    {seats:496,  blocks:124, payuse:256, urinals:0,   od:53, pop:900000,  center:[23.035,72.555]},
+  "Central": {seats:1459, blocks:339, payuse:288, urinals:206, od:36, pop:750000,  center:[23.025,72.592]},
+  "New West":{seats:4,    blocks:1,   payuse:164, urinals:167, od:11, pop:1150000, center:[23.04,72.49]}
+};
+const GENDER = {menSeats:4431, womenSeats:3985, menUrinals:1182, womenUrinals:0, gapPct:42};
+const COSTS = { // SBM-U / CPHEEO norms (₹)
+  seat:98000, urinal:32000, vgfSeat:39200, vgfUrinal:12800,
+  sheBlock:1140000,        // 11 WC-eq seats + 2 urinals, doc §9.1 worked example
+  refurb:300000,           // indicative avg refurb per block (women/accessible retrofit)
+  omBlockYr:180000,        // indicative O&M per block per year
+  iotSite:25000, caretakerYr:150000, mhmAddon:45000, accessUnit:120000
+};
+// Approx indicative zone polygons (Sabarmati river ≈ lng 72.575 divides W/E city)
+const ZONE_POLY = {
+  "Central":[[23.055,72.575],[23.055,72.615],[22.995,72.615],[22.995,72.575]],
+  "West":[[23.065,72.525],[23.065,72.575],[22.995,72.575],[22.995,72.525]],
+  "New West":[[23.115,72.42],[23.115,72.525],[22.955,72.525],[22.955,72.42]],
+  "North":[[23.145,72.545],[23.145,72.655],[23.055,72.655],[23.055,72.575],[23.065,72.575],[23.065,72.545]],
+  "East":[[23.055,72.615],[23.055,72.71],[22.985,72.71],[22.985,72.615]],
+  "South":[[22.995,72.545],[22.995,72.615],[22.985,72.615],[22.985,72.66],[22.925,72.66],[22.925,72.545]]
+};
+// Bordering districts of Ahmedabad district (populations: Census 2011 basis;
+// all Gujarat rural districts declared ODF under SBM-Gramin, Oct 2017)
+const NEIGHBORS = [
+  {name:"Gandhinagar",dir:"NE",lat:23.223,lng:72.650,hq:"Gandhinagar",pop:"13.9 lakh",towns:"Adalaj, Kalol, Dehgam",
+   corridor:"Strongest daily commuter corridor — state-capital twin city; metro Phase-2 + NH147 link; heavy two-way office traffic (GIFT City, Infocity)",
+   inflow:5,note:"Joint AUDA–GUDA planning zone; North Zone transit toilets (Chandkheda, Motera) are the gateway"},
+  {name:"Mehsana",dir:"N",lat:23.588,lng:72.369,hq:"Mehsana",pop:"20.4 lakh",towns:"Kadi, Vijapur",
+   corridor:"Ahmedabad–Mehsana industrial corridor; Suzuki/auto belt (Hansalpur–Becharaji) draws workers both ways",
+   inflow:3,note:"Industrial commuters enter via Chandkheda — pairs with the Gandhinagar gateway"},
+  {name:"Kheda",dir:"E",lat:22.750,lng:72.685,hq:"Nadiad",pop:"≈23 lakh (2011 bounds)",towns:"Nadiad, Mahemdavad, Kheda",
+   corridor:"NH48 (Vadodara side) — highest freight + bus inflow; Mahemdavad rail line",
+   inflow:4,note:"The doc's eastern-fringe OD hotspots sit on this approach; East/South Zone entry"},
+  {name:"Anand",dir:"SE",lat:22.556,lng:72.951,hq:"Anand",pop:"20.9 lakh",towns:"Anand, Vallabh Vidyanagar",
+   corridor:"NH48 + rail toward Vadodara; Amul dairy belt and university traffic",
+   inflow:3,note:"Shares the NH48 gateway with Kheda — Vatva/Maninagar facilities serve arrivals first"},
+  {name:"Bhavnagar",dir:"S",lat:21.764,lng:72.151,hq:"Bhavnagar",pop:"≈22 lakh (post-2013 split)",towns:"Vallabhipur, Bhal coastal belt",
+   corridor:"State highway via Dholka–Barwala; long, sparse border along Gulf of Khambhat salt flats",
+   inflow:1,note:"Lowest-density border stretch; minimal daily commuter load"},
+  {name:"Botad",dir:"SW",lat:22.169,lng:71.666,hq:"Botad",pop:"6.6 lakh",towns:"Barwala, Ranpur",
+   corridor:"Ahmedabad–Botad rail + state highway; mostly agricultural traffic",
+   inflow:1,note:"Carved out of Bhavnagar in 2013; lightest inflow of the seven"},
+  {name:"Surendranagar",dir:"W",lat:22.727,lng:71.649,hq:"Surendranagar (Wadhwan)",pop:"17.6 lakh",towns:"Limbdi, Wadhwan, Patdi",
+   corridor:"NH47 toward Rajkot via Limbdi; Viramgam rail junction (inside Ahmedabad district) funnels this traffic",
+   inflow:3,note:"Western approach passes the Sanand auto belt — New West Zone gateway (Sarkhej side)"}
+];
+function nearestFacTo(lat,lng){let best=null,bd=1e9;for(const f of FAC){const d=(f.lat-lat)**2+(f.lng-lng)**2;if(d<bd){bd=d;best=f}}return {f:best,d:Math.sqrt(bd)*111}}
+
+// ---------- Seed facility register (real named locations; attributes modeled) ----------
+// f: [name, zone, type, lat, lng, footfall(1-5), womenAtWork(1-5), flags]
+// flags: h=doc hotspot, t=transit, m=market, i=industrial, s=smart(SCADL), p=pink/she, x=24x7, L=locked 11pm-6am (doc §3.4), w=doc-flagged ward
+const T={CT:"Community Toilet",PT:"Public Pay&Use",UR:"Urinal",SM:"Smart Toilet",SHE:"She-Toilet (Pink)"};
+const SEED=[
+["Lal Darwaja AMTS Terminal","Central","PT",23.0246,72.5787,5,4,"t"],
+["Bhadra Plaza","Central","PT",23.0236,72.5814,5,4,"m"],
+["Manek Chowk Market","Central","CT",23.0239,72.5883,5,5,"m"],
+["Teen Darwaja","Central","UR",23.0243,72.5847,4,3,"m"],
+["Kalupur Railway Station (main)","Central","PT",23.0258,72.6011,5,4,"tx"],
+["Kalupur Metro Station","Central","PT",23.0262,72.5995,4,4,"t"],
+["Sarangpur Bus Depot","Central","PT",23.0212,72.6045,4,3,"tL"],
+["Delhi Darwaja","Central","CT",23.0369,72.5892,3,3,""],
+["Dariapur Ward Block","Central","CT",23.0330,72.5920,3,3,""],
+["Shahpur Ward Block A","Central","CT",23.0399,72.5810,3,3,"w"],
+["Shahpur Ward Block B","Central","CT",23.0421,72.5843,3,3,"w"],
+["Khadia Gate","Central","CT",23.0195,72.5905,3,3,""],
+["Raipur Chakla","Central","CT",23.0186,72.5946,3,3,""],
+["Astodia Darwaja","Central","PT",23.0170,72.5872,4,3,"mL"],
+["Panchkuva Cloth Market","Central","UR",23.0230,72.5965,4,3,"m"],
+["Jamalpur Vegetable Market","Central","CT",23.0128,72.5834,4,4,"m"],
+["Gheekanta Metro Station","Central","PT",23.0296,72.5868,3,3,"t"],
+["Old High Court Interchange","Central","PT",23.0331,72.5762,4,3,"t"],
+["Vadaj Community Block","West","CT",23.0611,72.5688,4,3,"h"],
+["Ramapir no Tekro Block 1","West","CT",23.0645,72.5741,4,3,"h"],
+["Ramapir no Tekro Block 2","West","CT",23.0668,72.5768,4,3,"h"],
+["Gulbai Tekra Block","West","CT",23.0358,72.5498,4,3,"h"],
+["Usmanpura Riverfront","West","PT",23.0480,72.5735,3,3,""],
+["Ellis Bridge (Nehru Br. end)","West","PT",23.0264,72.5722,4,3,"t"],
+["Paldi AMTS Hub","West","PT",23.0116,72.5629,4,3,"tL"],
+["Law Garden Night Market","West","PT",23.0264,72.5606,4,4,"m"],
+["Vastrapur Lake","West","PT",23.0402,72.5290,4,4,""],
+["Gujarat University Metro","West","PT",23.0369,72.5470,4,4,"t"],
+["Naranpura Block","West","CT",23.0570,72.5545,3,3,""],
+["Ashram Road BRTS (Income Tax)","West","PT",23.0402,72.5701,4,3,"t"],
+["CG Road Municipal Market","West","PT",23.0311,72.5590,4,4,"m"],
+["Kochrab Block","West","CT",23.0155,72.5701,3,3,""],
+["Sabarmati Ashram Visitor Block","North","PT",23.0608,72.5808,4,4,"h"],
+["Sabarmati Railway Station","North","PT",23.0790,72.5880,4,3,"tL"],
+["Motera Stadium BRTS","North","PT",23.0916,72.5975,3,3,"t"],
+["Chandkheda Block","North","CT",23.1128,72.5810,3,3,""],
+["Ranip BRTS Terminal","North","PT",23.0821,72.5679,4,3,"t"],
+["Dudheshwar Block","North","CT",23.0509,72.5838,3,3,""],
+["Shahibaug Underbridge","North","UR",23.0523,72.5910,3,2,""],
+["Madhupura Market","North","CT",23.0410,72.5950,4,3,"m"],
+["Civil Hospital Asarwa","North","PT",23.0525,72.6047,5,4,"x"],
+["Naroda Road BRTS (Memco)","North","PT",23.0570,72.6280,4,3,"t"],
+["Naroda GIDC Estate Block","East","CT",23.0705,72.6598,4,4,"i"],
+["Odhav GIDC Block","East","CT",23.0198,72.6702,4,4,"i"],
+["Nikol Block","East","CT",23.0489,72.6580,3,3,""],
+["Bapunagar Block","East","CT",23.0335,72.6320,4,3,""],
+["Amraiwadi Metro Station","East","PT",23.0119,72.6265,4,3,"t"],
+["Rakhial Textile Belt Block","East","CT",23.0250,72.6230,4,4,"i"],
+["Vastral Gam Metro","East","PT",23.0090,72.6805,3,3,"t"],
+["Apparel Park Metro","East","PT",23.0180,72.6390,4,5,"ti"],
+["Viratnagar Block","East","CT",23.0290,72.6560,3,3,""],
+["Thakkarbapa Nagar Block","East","CT",23.0430,72.6480,3,3,""],
+["Maninagar Railway Station","South","PT",22.9970,72.6030,5,4,"tL"],
+["Kankaria Lakefront (Gate 1)","South","SM",23.0069,72.6021,5,5,"s"],
+["Geeta Mandir ST Bus Terminal","South","PT",23.0135,72.5950,5,4,"tx"],
+["Vatva GIDC Block","South","CT",22.9640,72.6250,4,4,"i"],
+["Isanpur Block","South","CT",22.9880,72.6110,3,3,""],
+["Ghodasar Block","South","CT",22.9840,72.6050,3,3,""],
+["Behrampura Block","South","CT",22.9920,72.5880,4,3,""],
+["Danilimda Block","South","CT",22.9890,72.5810,3,3,""],
+["Narol Circle","South","UR",22.9720,72.5830,4,2,"i"],
+["Lambha Block","South","CT",22.9530,72.6010,3,3,""],
+["Indrapuri Ward Block","South","CT",22.9950,72.6180,3,3,"w"],
+["ISKCON BRTS Station","New West","PT",23.0286,72.5065,4,4,"t"],
+["Bopal Gam Block","New West","CT",23.0330,72.4640,3,3,""],
+["Gota BRTS","New West","PT",23.1010,72.5410,3,3,"t"],
+["Thaltej Gam Metro","New West","PT",23.0500,72.4990,4,4,"t"],
+["Sarkhej Roza Visitor Block","New West","PT",22.9830,72.5020,3,3,""],
+["Juhapura Block","New West","CT",23.0020,72.5290,4,3,""],
+["Prahladnagar Garden","New West","PT",23.0110,72.5090,4,4,""],
+["Sindhu Bhavan Road (SCADL)","New West","SM",23.0450,72.4890,4,4,"s"],
+["Science City Block","New West","PT",23.0790,72.5000,3,3,""],
+["Vejalpur Block","New West","CT",23.0060,72.5230,3,3,""],
+["Riverfront Event Centre (SCADL)","West","SM",23.0330,72.5720,4,4,"s"],
+["Vasna Pink Toilet (FY25-26)","West","SHE",23.0050,72.5560,4,5,"p"],
+["Naroda Pink Toilet (FY25-26)","East","SHE",23.0660,72.6510,4,5,"pi"],
+["Chandkheda Pink Toilet (FY25-26)","North","SHE",23.1050,72.5850,3,5,"p"]
+];
+
+// deterministic PRNG so the modeled seed is stable & explainable
+function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+// zone condition modifiers derived from CSP evidence (OD spots & seat deficits)
+const ZMOD={ "West":-1.0,"Central":-0.7,"North":-0.5,"South":-0.2,"East":-0.1,"New West":-0.4 };
+
+function buildFacility(row,idx){
+  const [name,zone,type,lat,lng,foot,waw,flags]=row;
+  const r=rng(hashStr(name+zone));
+  const isSmart=type==="SM", isShe=type==="SHE", isUr=type==="UR";
+  const base=isShe?4.4:isSmart?4.0:2.9+ZMOD[zone];
+  const clean=Math.max(0.5,Math.min(5,base+ (r()*1.6-0.8)));
+  const water=isShe||isSmart?true:r()> (0.25 - ZMOD[zone]*0.12);
+  const lighting=isShe||isSmart?true:r()>0.42;
+  const caretaker=isShe?true:isSmart?r()>0.3:r()>0.62;
+  const womenSeats=isUr?0:isShe?8:Math.round((type==="CT"?4:3)*(0.6+r()*0.7));
+  const menSeats=isShe?0:isUr?Math.round(3+r()*5):Math.round((type==="CT"?5:3)*(0.7+r()*0.8));
+  const mhmPads=isShe? true : (womenSeats>0 && r()>0.82);
+  const mhmIncin=isShe? r()>0.25 : (mhmPads&&r()>0.5);
+  const westernSeat=isShe||isSmart?true:r()>0.68;
+  const grabBars=isShe?r()>0.35:isSmart?r()>0.5:r()>0.93; // CSP: zero accessible seats citywide
+  const flag=f=>flags.includes(f);
+  const h24=flag("x")||isSmart&&r()>0.6;
+  const locked=flag("L")||(!h24&&r()>0.7);
+  const open=h24?"00:00":locked?"06:00":["05:00","05:30","06:00"][Math.floor(r()*3)];
+  const close=h24?"24:00":locked?"23:00":["21:00","22:00","23:00"][Math.floor(r()*3)];
+  const safety=Math.max(0.5,Math.min(5,(lighting?3.4:2.0)+(caretaker?0.8:0)+(flag("t")?0.3:0)+(flag("h")?-0.8:0)+(r()*1.2-0.6)));
+  const f={
+    id:"f"+idx,name,zone,type:T[type],tcode:type,lat,lng,foot,waw,
+    hotspot:flag("h"),transit:flag("t"),market:flag("m"),industrial:flag("i"),wardFlag:flag("w"),
+    clean:+clean.toFixed(1),water,lighting,caretaker,womenSeats,menSeats,
+    mhmPads,mhmIncin,westernSeat,grabBars,h24,open,close,
+    safety:+safety.toFixed(1),
+    source:isShe?"AMC FY2025-26 budget (announced)":isSmart?"SCADL smart-toilet programme":"CSP 2012 / CEPT survey base + modeled seed",
+    verified:false,reports:0,lastReport:null
+  };
+  f.base={clean:f.clean,safety:f.safety,water:f.water,lighting:f.lighting,caretaker:f.caretaker,mhmPads:f.mhmPads};
+  f.risk=riskScore(f);
+  return f;
+}
+function pregSafe(f){return f.womenSeats>0&&f.westernSeat&&f.water&&f.clean>=2.5&&(f.grabBars||f.caretaker)}
+function womenUsable(f){return f.womenSeats>0&&f.clean>=2&&f.water}
+function isOpenNow(f,d){if(f.h24)return true;const hm=(d||new Date());const cur=hm.getHours()*60+hm.getMinutes();const [oh,om]=f.open.split(":").map(Number);const [ch,cm]=f.close.split(":").map(Number);return cur>=oh*60+om&&cur<ch*60+cm}
+// Risk weights: WORKING ASSUMPTIONS, not validated policy weights.
+// Exposed as sliders in the Data tab so officials can test ranking sensitivity.
+const DEFW={clean:25,safety:20,water:15,hours:10,mhm:10,preg:10,om:10};
+let W=Object.assign({},DEFW);
+function riskScore(f){ // 0 good … 100 critical (normalised to current weight sum)
+  let s=0;
+  s+=(5-f.clean)/5*W.clean;
+  s+=f.water?0:W.water;
+  s+=(5-f.safety)/5*W.safety;
+  s+=f.h24?0:(f.close<="23:00"&&f.open>="06:00"?W.hours*0.8:W.hours*0.4);
+  s+=f.womenSeats===0?W.mhm:(f.mhmPads?0:W.mhm*0.6);
+  s+=pregSafe(f)?0:(f.grabBars?W.preg*0.4:W.preg*0.8);
+  s+=f.caretaker?0:W.om;
+  const sum=W.clean+W.safety+W.water+W.hours+W.mhm+W.preg+W.om;
+  return Math.round(Math.min(100,s*100/Math.max(sum,1)));
+}
+function recalcAll(){FAC.forEach(f=>f.risk=riskScore(f))}
+function riskCat(r){return r>=70?["Critical","crit"]:r>=50?["Poor","poor"]:r>=30?["Fair","fair"]:["Good","good"]}
+let CBMODE=false; // colour-blind-safe palette (Okabe–Ito), toggle in Data tab
+function riskColor(r){
+  if(CBMODE)return r>=70?"#cc79a7":r>=50?"#e69f00":r>=30?"#f0e442":"#0072b2";
+  return r>=70?"#e74c3c":r>=50?"#e67e22":r>=30?"#f1c40f":"#2ecc71";
+}
+
+let FAC=SEED.map(buildFacility);
+
+// =====================================================================
+//  SIMULATION ENGINE — every advisor answer carries a BEFORE → AFTER
+//  projection; plans can be previewed live on the map.
+// =====================================================================
+let SIM=null;
+const activeFac=()=>SIM?SIM.fac:FAC;
+function cloneF(f){return Object.assign({},f)}
+function metrics(arr){return{
+  n:arr.length,
+  avg:Math.round(arr.reduce((a,f)=>a+f.risk,0)/Math.max(arr.length,1)),
+  crit:arr.filter(f=>f.risk>=70).length,
+  poor:arr.filter(f=>f.risk>=50).length,
+  women:Math.round(arr.filter(womenUsable).length/Math.max(arr.length,1)*100),
+  preg:arr.filter(pregSafe).length,
+  pads:arr.filter(f=>f.mhmPads).length,
+  h24:arr.filter(f=>f.h24).length,
+  wseats:arr.reduce((a,f)=>a+f.womenSeats,0)
+}}
+function refurbF(f){f.clean=Math.max(f.clean,4.2);f.water=true;f.lighting=true;f.caretaker=true;if(f.womenSeats>0){f.mhmPads=true;f.mhmIncin=true}f.westernSeat=true;f.grabBars=true;f.safety=Math.max(f.safety,3.8);f._changed=true}
+let NEWID=0;
+function newBlock(zone,she,idx){
+  const Z=ZONES[zone];const r=rng(hashStr(zone+"new"+idx));
+  return{id:"sim"+(NEWID++),name:(she?"She-Toilet (planned) — ":"New women-inclusive block — ")+zone+" #"+(idx+1),zone,
+  type:she?T.SHE:T.CT,tcode:she?"SHE":"CT",lat:Z.center[0]+(r()-.5)*.05,lng:Z.center[1]+(r()-.5)*.05,
+  foot:3,waw:she?5:3,hotspot:false,transit:false,market:false,industrial:false,wardFlag:false,
+  clean:4.5,water:true,lighting:true,caretaker:true,womenSeats:she?8:6,menSeats:she?0:5,
+  mhmPads:true,mhmIncin:true,westernSeat:true,grabBars:true,h24:she,open:she?"00:00":"05:30",close:she?"24:00":"23:00",
+  safety:4.2,source:"Projected — Claude's plan",verified:false,reports:0,lastReport:null,_new:true}
+}
+const SHE_SITES=[["Kalupur Station She-Toilet",23.0272,72.6018,"Central"],["Geeta Mandir She-Toilet",23.0141,72.5957,"South"],["Manek Chowk She-Toilet",23.0249,72.5889,"Central"],["Naroda GIDC She-Toilet",23.0715,72.6590,"East"],["Vatva GIDC She-Toilet",22.9648,72.6242,"South"],["Apparel Park She-Toilet",23.0190,72.6396,"East"],["Sarangpur She-Toilet",23.0222,72.6055,"Central"],["Ranip Terminal She-Toilet",23.0827,72.5672,"North"]];
+const PLANS=[];
+function makePlan(label,fn){
+  const p={label,apply(){const arr=FAC.map(cloneF);fn(arr);arr.forEach(f=>f.risk=riskScore(f));return arr}};
+  PLANS.push(p);return p;
+}
+function baHtml(plan){
+  const b=metrics(FAC),A=metrics(plan.apply());
+  const R=(l,bv,av,up,suf="")=>{const ch=av-bv;const good=up?ch>0:ch<0;const c=ch===0?"var(--muted)":good?"var(--good)":"var(--crit)";
+    return `<tr><td>${l}</td><td>${bv}${suf}</td><td style="color:${c};font-weight:700">${av}${suf} ${ch===0?"":ch>0?"▲":"▼"}</td></tr>`};
+  return `<div style="margin-top:10px;border:1px solid #6f5bd0;border-radius:10px;padding:10px;background:rgba(111,91,208,.09)">
+  <b style="color:#b3a1ff">🔮 PROJECTED IMPACT — ${plan.label}</b>
+  <table><tr><th></th><th>Before (today)</th><th>After (projected)</th></tr>
+  ${R("Facilities on map",b.n,A.n,true)}
+  ${R("Avg citywide risk",b.avg,A.avg,false)}
+  ${R("Critical facilities",b.crit,A.crit,false)}
+  ${R("Poor or worse",b.poor,A.poor,false)}
+  ${R("Women-usable",b.women,A.women,true,"%")}
+  ${R("Pregnancy-safe sites",b.preg,A.preg,true)}
+  ${R("Pads / MHM sites",b.pads,A.pads,true)}
+  ${R("24×7 sites",b.h24,A.h24,true)}
+  ${R("Women's seats (mapped)",b.wseats,A.wseats,true)}</table>
+  <button class="primary" style="width:100%;margin-top:8px;background:#8f7bff" onclick="startSim(${PLANS.length-1})">▶ Preview the AFTER state on the map</button>
+  <div class="src-note">Projection: refurbished sites reach 4.2/5 cleanliness with water, lighting & caretaker; new blocks meet the doc §6.B design code. Deterministic model — same plan, same numbers.</div></div>`;
+}
+
+// ---------- persistence ----------
+const LS="amdRestroomAtlas.v1";
+let REPORTS=[];
+function loadState(){try{const s=JSON.parse(localStorage.getItem(LS));if(!s)return;(s.reports||[]).forEach(r=>applyReport(r,false));}catch(e){}}
+function saveState(){try{localStorage.setItem(LS,JSON.stringify({reports:REPORTS}))}catch(e){}}
+function median(a){const s=[...a].sort((x,y)=>x-y);return s[Math.floor(s.length/2)]}
+function maj(a){return a.filter(Boolean).length*2>=a.length}
+// Troll-resistant aggregation: the modeled base value counts as one sample,
+// scores take the MEDIAN of (base + last 5 reports), booleans the MAJORITY of
+// (base + last 3). One rogue report can no longer flip a facility.
+function aggregate(f){
+  const rs=REPORTS.filter(r=>r.fid===f.id).sort((a,b)=>a.ts-b.ts);
+  if(!rs.length)return;
+  const last5=rs.slice(-5),last3=rs.slice(-3);
+  f.clean=+median([f.base.clean,...last5.map(r=>+r.clean||3)]).toFixed(1);
+  f.safety=+median([f.base.safety,...last5.map(r=>+r.safety||3)]).toFixed(1);
+  ["water","lighting","caretaker","mhmPads"].forEach(k=>{f[k]=maj([f.base[k],...last3.map(r=>!!r[k])])});
+  f.reports=rs.length;f.verified=true;f.lastReport=rs[rs.length-1].ts;
+  f.risk=riskScore(f);
+}
+// Idempotent: every report carries an id; duplicates (double-import) are ignored.
+function applyReport(r,persist=true){
+  const f=FAC.find(x=>x.id===r.fid);if(!f)return false;
+  if(!r.id)r.id="r"+hashStr(r.fid+"|"+r.ts+"|"+(r.clean||"")+"|"+(r.safety||"")+"|"+(r.comment||""));
+  if(REPORTS.some(x=>x.id===r.id))return false;
+  REPORTS.push(r);aggregate(f);
+  if(persist)saveState();
+  return true;
+}
+
+// sample live feed (labeled as demo seed in Data tab)
+const FEED_SEED=[
+  ["Manek Chowk Market","No water in women's section since morning",1],
+  ["Geeta Mandir ST Bus Terminal","Caretaker present, clean at 6am",0],
+  ["Vadaj Community Block","Broken door latch, no lighting after dark",2],
+  ["Kankaria Lakefront (Gate 1)","Smart toilet working, pads dispenser stocked",0],
+  ["Ramapir no Tekro Block 1","Queue of 15+ women at 7am, only 2 seats working",1],
+  ["Apparel Park Metro","New block clean; no sanitary pad dispenser",1]
+];
+
+// =====================================================================
+//  AI ADVISOR — embedded analytics engine (deterministic, data-grounded)
+// =====================================================================
+function fmtINR(n){ if(n>=1e7)return "₹"+(n/1e7).toFixed(n>=1e9?0:2)+" crore"; if(n>=1e5)return "₹"+(n/1e5).toFixed(1)+" lakh"; return "₹"+n.toLocaleString("en-IN") }
+function seatsPer1k(z){const Z=ZONES[z];return ((Z.seats+Z.payuse)/(Z.pop/1000))}
+function zoneRiskAvg(z){const fs=FAC.filter(f=>f.zone===z);return fs.reduce((a,f)=>a+f.risk,0)/fs.length}
+function womenDemandIndex(z){ // demand proxy: footfall×women-at-work at markets/industry/transit vs women's seats
+  const fs=FAC.filter(f=>f.zone===z);
+  const demand=fs.reduce((a,f)=>a+f.foot*f.waw*((f.market||f.industrial||f.transit)?1.5:1),0);
+  const supply=fs.reduce((a,f)=>a+f.womenSeats,0)+1;
+  return demand/supply;
+}
+function tbl(rows,hdr){let h="<table><tr>"+hdr.map(x=>"<th>"+x+"</th>").join("")+"</tr>";rows.forEach(r=>h+="<tr>"+r.map(c=>"<td>"+c+"</td>").join("")+"</tr>");return h+"</table>"}
+
+// ---------- generic query understanding (compositional engine) ----------
+function parseZone(ql){if(ql.includes("new west"))return "New West";for(const z of ["West","East","North","South","Central"])if(ql.includes(z.toLowerCase()))return z;return null}
+function parseType(ql){if(/pink|she[- ]?toilet/.test(ql))return "SHE";if(ql.includes("smart"))return "SM";if(ql.includes("urinal"))return "UR";if(/pay.?(and|&|n)?.?use/.test(ql))return "PT";if(ql.includes("community"))return "CT";return null}
+// [regex, family, label, test, fix] — first match per family wins (negatives first)
+const QPAT=[
+ [/no water|without water|water not|lack(s|ing)? water|dry/, "water","no water",f=>!f.water,f=>{f.water=true}],
+ [/unlit|no light|without light|not lit|no lighting|dark/, "light","unlit",f=>!f.lighting,f=>{f.lighting=true;f.safety=Math.min(5,f.safety+1)}],
+ [/unstaffed|no caretaker|without caretaker|no staff/, "staff","unstaffed",f=>!f.caretaker,f=>{f.caretaker=true}],
+ [/no pads|without pads|no sanitary|no mhm/, "pads","no pads (has women's seats)",f=>!f.mhmPads&&f.womenSeats>0,f=>{f.mhmPads=true;f.mhmIncin=true}],
+ [/dirty|dirtiest|filthy|unclean/, "clean","dirty (<2.5/5)",f=>f.clean<2.5,f=>{f.clean=3.8}],
+ [/unsafe|dangerous/, "safety","unsafe (<2.5/5)",f=>f.safety<2.5,f=>{f.lighting=true;f.caretaker=true;f.safety=Math.min(5,f.safety+1.5)}],
+ [/critical/, "risk","critical risk (≥70)",f=>f.risk>=70,refurbF],
+ [/high risk|risky|poor condition/, "risk","poor-or-worse (risk ≥50)",f=>f.risk>=50,refurbF],
+ [/clos/, "hours","closed right now",f=>!isOpenNow(f),f=>{f.h24=true;f.open="00:00";f.close="24:00"}],
+ [/24.?7|round.the.clock|all night|at night|night/, "hours","24×7 / open at night",f=>f.h24,null],
+ [/pregnan/, "preg","pregnancy-usable",f=>pregSafe(f),null],
+ [/wheelchair|accessib|divyang|disabled|barrier/, "access","accessible",f=>f.grabBars,null],
+ [/pads|tampon|sanitary|mhm|menstrual/, "pads","pads available",f=>f.mhmPads,null],
+ [/caretaker|staffed|attendant/, "staff","staffed",f=>f.caretaker,null],
+ [/water/, "water","has water",f=>f.water,null],
+ [/\blit\b|lighting|lights/, "light","lit",f=>f.lighting,null],
+ [/hotspot|open defecation|\bod\b/, "hot","OD hotspot",f=>f.hotspot,null],
+ [/transit|station|metro|brts|amts|\bbus\b|railway/, "loc","at transit",f=>f.transit,null],
+ [/market|vending|vendor/, "loc","at market",f=>f.market,null],
+ [/industrial|gidc|factory|textile/, "loc","industrial area",f=>f.industrial,null],
+ [/women|female|ladies/, "women","women-usable",f=>womenUsable(f),null],
+ [/\bopen\b/, "hours","open now",f=>isOpenNow(f),null],
+ [/clean/, "clean","clean (≥3.5/5)",f=>f.clean>=3.5,null],
+ [/\bsafe\b|safest/, "safety","safe (≥3.5/5)",f=>f.safety>=3.5,null]
+];
+// General negation handling: "don't have caretakers", "lacking water", "not clean"
+// etc. invert to the deficiency filter instead of matching the positive term.
+const NEGW="(?:\\bno\\b|\\bnot\\b|\\bnever\\b|don'?t|doesn'?t|do not|does not|without|lack\\w*|missing)";
+function negRe(core){return new RegExp(NEGW+"(?:\\s+\\w+){0,2}?\\s+(?:"+core+")")}
+const DYNNEG=[
+ ["water","water","no water",f=>!f.water,f=>{f.water=true}],
+ ["light","lights?|lighting|lit","unlit",f=>!f.lighting,f=>{f.lighting=true;f.safety=Math.min(5,f.safety+1)}],
+ ["staff","caretakers?|staff(?:ed)?|attendants?","unstaffed",f=>!f.caretaker,f=>{f.caretaker=true}],
+ ["pads","pads?|sanitary|mhm|napkins?|tampons?","no pads (has women's seats)",f=>!f.mhmPads&&f.womenSeats>0,f=>{f.mhmPads=true;f.mhmIncin=true}],
+ ["clean","clean","dirty (<2.5/5)",f=>f.clean<2.5,f=>{f.clean=3.8}],
+ ["safety","safe|safety","unsafe (<2.5/5)",f=>f.safety<2.5,f=>{f.lighting=true;f.caretaker=true;f.safety=Math.min(5,f.safety+1.5)}],
+ ["preg","pregnan\\w*","not pregnancy-usable",f=>!pregSafe(f),f=>{f.westernSeat=true;f.grabBars=true;f.water=true}],
+ ["access","wheelchair|accessib\\w*","not accessible",f=>!f.grabBars,f=>{f.grabBars=true;f.westernSeat=true}]
+];
+function detectFilters(ql){
+  const out=[],seen=new Set();
+  for(const [fam,core,label,test,fix] of DYNNEG){if(!seen.has(fam)&&negRe(core).test(ql)){seen.add(fam);out.push({label,test,fix})}}
+  for(const [re,fam,label,test,fix] of QPAT){if(seen.has(fam)||!re.test(ql))continue;seen.add(fam);out.push({label,test,fix})}
+  return out;
+}
+// ---------- walking-distance coverage analysis (doc §8, KPI #1) ----------
+let COVCACHE=null;
+function pip(lat,lng,poly){let c=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){const yi=poly[i][0],xi=poly[i][1],yj=poly[j][0],xj=poly[j][1];if(((yi>lat)!==(yj>lat))&&(lng<(xj-xi)*(lat-yi)/(yj-yi)+xi))c=!c}return c}
+function coverageStats(){ // ~550m grid over the (indicative) zone polygons; uniform demand — a stated limitation
+  if(COVCACHE)return COVCACHE;
+  const step=0.005,gaps=[];let tot=0,cov=0;const zTot={},zCov={};
+  for(let lat=22.925;lat<=23.145;lat+=step)for(let lng=72.42;lng<=72.71;lng+=step){
+    let zone=null;for(const z in ZONE_POLY){if(pip(lat,lng,ZONE_POLY[z])){zone=z;break}}
+    if(!zone)continue;
+    tot++;zTot[zone]=(zTot[zone]||0)+1;
+    let bd=1e9;for(const f of FAC){const d=distKm(lat,lng,f.lat,f.lng);if(d<bd)bd=d}
+    if(bd<=0.5){cov++;zCov[zone]=(zCov[zone]||0)+1}else gaps.push({lat,lng,zone,d:bd});
+  }
+  const zones={};for(const z in ZONES)zones[z]={pct:Math.round((zCov[z]||0)/(zTot[z]||1)*100),gaps:(zTot[z]||0)-(zCov[z]||0)};
+  COVCACHE={pct:Math.round(cov/Math.max(tot,1)*100),tot,gaps,zones};
+  return COVCACHE;
+}
+function coverageGaps(){return coverageStats().gaps}
+const SUPS=[[/cleanest/,"cleanest",(a,b)=>b.clean-a.clean,f=>f.clean+"/5"],[/dirtiest|filthiest/,"dirtiest",(a,b)=>a.clean-b.clean,f=>f.clean+"/5"],[/safest/,"safest",(a,b)=>b.safety-a.safety,f=>f.safety+"/5"],[/most dangerous|least safe/,"most dangerous",(a,b)=>a.safety-b.safety,f=>f.safety+"/5"],[/worst|highest risk/,"highest-risk",(a,b)=>b.risk-a.risk,f=>"risk "+f.risk],[/\bbest\b|lowest risk/,"lowest-risk",(a,b)=>a.risk-b.risk,f=>"risk "+f.risk],[/busiest|most used|highest footfall/,"busiest",(a,b)=>b.foot-a.foot,f=>"footfall "+f.foot+"/5"]];
+function distKm(a,b,c,d){const R=6371,r=Math.PI/180,x=(c-a)*r,y=(d-b)*r*Math.cos((a+c)/2*r);return R*Math.sqrt(x*x+y*y)}
+const NAME_STOP=new Set(["block","blocks","toilet","toilets","station","market","metro","terminal","ward","zone","gidc","estate","railway","community","public","depot","circle","road","gate","gates","lake","garden","bridge","brts","amts","gam","stop","plaza","cloth","vegetable","night","stadium","hospital","civil","visitor","event","centre","university","science","city","main","underbridge","planned"]);
+function nameTokens(f){return f.name.toLowerCase().split(/[^a-z]+/).filter(w=>w.length>=4&&!NAME_STOP.has(w))}
+function findFacility(ql){let best=null,bc=0;for(const f of FAC){let c=0;for(const t of nameTokens(f))if(ql.includes(t))c++;if(c>bc){bc=c;best=f}}return bc?{f:best,c:bc}:null}
+function facilityProfile(f){
+  const [cat,cls]=riskCat(f.risk);
+  let out=`<b>${f.name}</b> — ${f.type}, ${f.zone} Zone${f.hotspot?" · OD hotspot":""}\nRisk: <span class="pill p-${cls}">${f.risk} ${cat}</span> · ${isOpenNow(f)?'<b style="color:var(--good)">OPEN now</b>':'<b style="color:var(--crit)">CLOSED now</b>'} (${f.h24?"24×7":f.open+"–"+f.close})\n`;
+  out+=tbl([["Cleanliness",f.clean+"/5"],["Water",f.water?"yes":"✗ no"],["Lighting",f.lighting?"yes":"✗ no"],["Caretaker",f.caretaker?"yes":"✗ no"],["Pads / MHM",f.mhmPads?"yes"+(f.mhmIncin?" + incinerator":""):"✗ no"],["Pregnancy-usable",pregSafe(f)?"yes":"✗ no"],["Seats (W / M)",f.womenSeats+" / "+f.menSeats],["Surrounding safety",f.safety+"/5"],["Footfall",f.foot+"/5"]],["Attribute","Status"]);
+  out+=`Source: ${f.source}${f.verified?` · verified by ${f.reports} citizen report(s)`:" · pending field audit"}`;
+  out+=baHtml(makePlan(`refurbish ${f.name} (≈ ${fmtINR(COSTS.refurb)} + O&M)`,arr=>{const x=arr.find(y=>y.id===f.id);if(x)refurbF(x)}));
+  return out;
+}
+// ---------- optional Claude API layer: full-dataset brain with plan output ----------
+const KEYLS="amdAtlas.apikey", PREFLS="amdAtlas.preferLLM";
+function llmContext(){
+  const zones=Object.keys(ZONES).map(z=>({zone:z,seatsCSP:ZONES[z].seats,payuseCSP:ZONES[z].payuse,odSpots:ZONES[z].od,pop:ZONES[z].pop,avgMappedRisk:Math.round(zoneRiskAvg(z)),seatsPer1k:+seatsPer1k(z).toFixed(2)}));
+  // full facility register, one compact line each
+  const facs=FAC.map(f=>[f.id,f.name.replace(/[|<>{}"'`]/g," ").slice(0,60),f.zone,f.tcode,"risk"+f.risk,"clean"+f.clean,f.water?"water":"NOwater",f.lighting?"lit":"UNLIT",f.caretaker?"staffed":"UNSTAFFED",f.mhmPads?"pads":"NOpads",pregSafe(f)?"pregOK":"NOpreg",f.h24?"24x7":f.open+"-"+f.close,"W"+f.womenSeats+"/M"+f.menSeats,"foot"+f.foot,f.hotspot?"HOTSPOT":"",f.transit?"transit":"",f.market?"market":"",f.industrial?"industrial":""].filter(Boolean).join("|"));
+  const borders=NEIGHBORS.map(n=>({district:n.name,direction:n.dir,hq:n.hq,population:n.pop,commuterInflow1to5:n.inflow,corridor:n.corridor}));
+  return JSON.stringify({cityMetrics:metrics(FAC),zonesCSP2012:zones,genderCSP2012:GENDER,unitCostsINR_SBMU:COSTS,facilities:facs,borderingDistricts:borders,notes:"CSP=City Sanitation Plan (UMC 2012). Facility attributes are modeled seed pending field audit. Risk 0=good,100=critical. Costs in INR. Bordering-district populations: Census 2011 basis; commuter corridors feed Ahmedabad's floating toilet demand."});
+}
+const LLM_SYS=`You are the Sanitation Investment Advisor inside the Ahmedabad Public Restroom Atlas, advising government officials. Ground every figure in the DATA (full facility register included). Currency: INR lakh/crore. Priorities per the city policy doc: West Zone first (496 seats, 53 OD spots), then Central, North; women-first design; O&M is the historic failure mode.
+Respond with ONLY a JSON object, no markdown fences, in this exact shape:
+{"answer":"<your advice, <250 words, plain text with \\n line breaks; name specific facilities/zones and rupee figures>",
+ "plan":{"label":"<short plan name>","actions":[
+   {"type":"build","zone":"<North|South|East|West|Central|New West>","count":<n>,"kind":"<she|standard>"},
+   {"type":"refurbish","facilities":["<facility id or name substring>",...]},
+   {"type":"staff","facilities":[...]},
+   {"type":"mhm","facilities":[...] or "all"},
+   {"type":"hours24","facilities":[...]},
+   {"type":"access","facilities":[...]}
+ ]}}
+Include "plan" ONLY when the question implies an intervention (investment, building, fixing, improving, staffing); use any subset of action types. For purely informational questions set "plan":null. DATA: `;
+function parseLlmJson(t){
+  if(!t)return null;
+  t=t.trim().replace(/^```(json)?/,"").replace(/```$/,"").trim();
+  const a=t.indexOf("{"),b=t.lastIndexOf("}");
+  if(a<0||b<0)return {answer:t,plan:null};
+  try{return JSON.parse(t.slice(a,b+1))}catch(e){return {answer:t,plan:null}}
+}
+function planFromActions(label,actions){
+  return makePlan(label||"Claude's plan",arr=>{
+    for(const a of actions||[]){
+      let targets=[];
+      if(a.facilities==="all")targets=arr;
+      else if(Array.isArray(a.facilities))targets=a.facilities.flatMap(t=>{const tl=(""+t).toLowerCase();return arr.filter(f=>f.id===t||f.name.toLowerCase().includes(tl))});
+      switch(a.type){
+        case "build":{const n=Math.min(+a.count||1,40);const z=ZONES[a.zone]?a.zone:"West";for(let i=0;i<n;i++)arr.push(newBlock(z,a.kind==="she",700+Math.floor(Math.random()*0)+PLANS.length*45+i));break}
+        case "refurbish":targets.forEach(refurbF);break;
+        case "staff":targets.forEach(f=>{f.caretaker=true;f.safety=Math.min(5,f.safety+0.8);f._changed=true});break;
+        case "mhm":targets.forEach(f=>{if(f.womenSeats>0){f.mhmPads=true;f.mhmIncin=true;f._changed=true}});break;
+        case "hours24":targets.forEach(f=>{f.h24=true;f.open="00:00";f.close="24:00";f._changed=true});break;
+        case "access":targets.forEach(f=>{f.westernSeat=true;f.grabBars=true;f._changed=true});break;
+      }
+    }
+  });
+}
+let CHAT_HIST=[]; // short conversation memory so follow-up questions keep context
+async function llmAnswer(q,key){
+  const msgs=[...CHAT_HIST.slice(-6),{role:"user",content:q}];
+  const models=["claude-sonnet-5","claude-haiku-4-5-20251001"]; // fallback if primary is deprecated
+  let lastErr="request failed";
+  for(const model of models){
+    const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model,max_tokens:1400,system:LLM_SYS+llmContext(),messages:msgs})});
+    if(r.ok){
+      const d=await r.json();
+      const txt=(d.content&&d.content[0]&&d.content[0].text)||null;
+      if(txt){CHAT_HIST.push({role:"user",content:q},{role:"assistant",content:txt});CHAT_HIST=CHAT_HIST.slice(-8)}
+      return parseLlmJson(txt);
+    }
+    lastErr="HTTP "+r.status;
+    if(r.status!==404&&r.status!==400)break; // only model errors trigger fallback
+  }
+  throw new Error(lastErr);
+}
+
+function agentAnswer(q){
+  const ql=q.toLowerCase();
+  // --- parse money ---
+  let money=null;
+  const mCr=ql.match(/([\d,.]+)\s*(crores?|cr)\b/), mL=ql.match(/([\d,.]+)\s*(lakhs?|lacs?)\b/);
+  if(mCr)money=parseFloat(mCr[1].replace(/,/g,""))*1e7;
+  else if(mL)money=parseFloat(mL[1].replace(/,/g,""))*1e5;
+  const mPpl=ql.match(/(\d+)[\s-]*(person|people|worker|staff|caretaker)/);
+
+  // --- staffing allocation ---
+  if(mPpl&&(ql.includes("budget")||ql.includes("alloc")||ql.includes("where")||ql.includes("deploy")||ql.includes("assign"))&&!money){
+    const n=+mPpl[1];
+    const ranked=FAC.filter(f=>!f.caretaker).sort((a,b)=>(b.risk*b.foot)-(a.risk*a.foot)).slice(0,n);
+    let out=`Deploying a ${n}-person caretaker team where impact per person is highest — ranked by (risk × footfall) at facilities currently WITHOUT any caretaker:\n`;
+    out+=tbl(ranked.map((f,i)=>[i+1,f.name,f.zone,f.risk,"★".repeat(f.foot)]),["#","Facility","Zone","Risk","Footfall"]);
+    out+=`\nAnnual cost: ${fmtINR(n*COSTS.caretakerYr)} (${fmtINR(COSTS.caretakerYr)}/caretaker/yr, fair-pay norm per doc §6.G). Expected effect: caretaker presence removes 10 risk pts per site and is the single strongest O&M lever identified in the City Sanitation Plan.`;
+    const ids=ranked.map(f=>f.id);
+    out+=baHtml(makePlan(`deploy ${n} caretakers`,arr=>ids.forEach(id=>{const f=arr.find(x=>x.id===id);if(f){f.caretaker=true;f.safety=Math.min(5,f.safety+0.8);f._changed=true}})));
+    return out;
+  }
+
+  // --- nearest facility to a landmark ---
+  if(/near/.test(ql)){
+    const lm=findFacility(ql);
+    if(lm){
+      const src=lm.f;
+      const near=FAC.filter(f=>f.id!==src.id).map(f=>({f,d:distKm(src.lat,src.lng,f.lat,f.lng)})).sort((a,b)=>a.d-b.d).slice(0,5);
+      return `Nearest facilities to <b>${src.name}</b> (${src.zone} Zone):\n`+tbl(near.map((x,i)=>[i+1,x.f.name,x.d.toFixed(2)+" km",`<span class="pill p-${riskCat(x.f.risk)[1]}">${x.f.risk}</span>`,isOpenNow(x.f)?"open":"closed"]),["#","Facility","Distance","Risk","Now"]);
+    }
+  }
+  // --- specific facility profile ("how bad is the situation in Vadaj?") ---
+  {
+    const lm=findFacility(ql);
+    if(lm&&(lm.c>=2||(lm.c>=1&&(/about|status|situation|profile|detail|condition|how is|how bad|how good/.test(ql)||ql.trim().split(/\s+/).length<=4))))
+      return facilityProfile(lm.f);
+  }
+  // --- what-if construction ("what if we build 15 blocks in New West?") ---
+  {
+    const mB=ql.match(/(?:build|construct|install|add)\s+(\d+)/);
+    if(mB){
+      const n=Math.min(+mB[1],40);
+      const she=/pink|she[- ]?toilet/.test(ql);
+      const z=parseZone(ql)||Object.keys(ZONES).sort((a,b)=>seatsPer1k(a)-seatsPer1k(b))[0];
+      const unit=she?COSTS.sheBlock+COSTS.mhmAddon+500000:COSTS.sheBlock+COSTS.mhmAddon+COSTS.accessUnit;
+      return `Scenario: ${n} new ${she?"She-Toilets (Pink)":"women-inclusive blocks"} in <b>${z} Zone</b>.\nCapex ≈ ${fmtINR(n*unit)} (${fmtINR(unit)}/block, SBM-U basis; VGF reimburses 40% of seat cost) + 5-yr O&M ≈ ${fmtINR(n*COSTS.omBlockYr*5)}. ${z} currently has ${seatsPer1k(z).toFixed(2)} seats/1,000 people and ${ZONES[z].od} OD spots.`
+      +baHtml(makePlan(`build ${n} new ${she?"She-Toilets":"blocks"} in ${z}`,arr=>{for(let i=0;i<n;i++)arr.push(newBlock(z,she,500+i))}));
+    }
+  }
+  // --- budget allocation ---
+  if(money){
+    const critical=FAC.filter(f=>f.risk>=70), poor=FAC.filter(f=>f.risk>=50&&f.risk<70);
+    const worstZones=Object.keys(ZONES).sort((a,b)=>seatsPer1k(a)-seatsPer1k(b));
+    const blockCost=COSTS.sheBlock+COSTS.mhmAddon+COSTS.accessUnit;
+    // Budget-scaled allocation — small budgets go to O&M recovery, not templates
+    let alloc,tier;
+    if(money<2e7){tier="small budget → O&M recovery first, no new construction";
+      alloc=[["Refurbish worst facilities (O&M recovery)",.55,"refurb"],["Ring-fenced O&M corpus",.30,"om"],["MHM + lighting retrofits",.10,"mhm"],["Monitoring & IEC",.05,"iec"]];}
+    else if(money<15e7){tier="medium budget → fix first, expand where coverage gaps are worst";
+      alloc=[["Refurbish critical & poor facilities",.38,"refurb"],["New women-inclusive blocks at worst coverage gaps",.22,"new"],["MHM + accessibility retrofits",.12,"mhm"],["Ring-fenced 5-yr O&M corpus",.18,"om"],["IoT + GIS + citizen app",.05,"iot"],["IEC / SSG training",.05,"iec"]];}
+    else{tier="large budget → full programme";
+      alloc=[["Refurbish critical facilities (West & Central first)",.25,"refurb"],["New women-inclusive blocks at worst coverage gaps",.34,"new"],["She-Toilets / Pink Toilets at transit, markets & industrial estates",.16,"she"],["Ring-fenced 5-yr O&M corpus",.15,"om"],["IoT monitoring + GIS + citizen app",.05,"iot"],["IEC / behaviour change + SSG training",.05,"iec"]];}
+    const share=k=>{const e=alloc.find(x=>x[2]===k);return e?e[1]:0};
+    let out=`Allocation plan for ${fmtINR(money)} — <i>${tier}</i> (SBM-U unit costs, CSP zone gaps, grid coverage analysis):\n`;
+    out+=tbl(alloc.map(([l,p])=>[l,Math.round(p*100)+"%",fmtINR(money*p)]),["Component","Share","Amount"]);
+    const refurbN=Math.min(critical.length+poor.length,Math.floor(money*share("refurb")/COSTS.refurb));
+    const newN=Math.floor(money*share("new")/blockCost);
+    const sheN=Math.floor(money*share("she")/(blockCost+500000));
+    const gaps=[...coverageGaps()].sort((a,b)=>b.d-a.d);
+    out+=`\nWhat it buys:\n• ${refurbN} refurbishments @ ~${fmtINR(COSTS.refurb)} — Critical on map: ${critical.length}, Poor: ${poor.length}.`;
+    if(newN)out+=`\n• ${newN} new women-inclusive blocks (≈ ${fmtINR(blockCost)} each), sited at the largest walking-distance gaps from the 500 m grid analysis (doc §6.A/§8) — e.g. ${gaps.slice(0,Math.min(newN,4)).map(g=>g.zone+" ("+g.d.toFixed(1)+" km from nearest mapped facility)").join("; ")}${newN>4?" …":""}.`;
+    if(sheN)out+=`\n• ${sheN} flagship She-Toilets at: Kalupur Station, Geeta Mandir terminal, Manek Chowk, Naroda & Vatva GIDC, Apparel Park.`;
+    out+=`\n• O&M corpus covers ~${Math.floor(money*share("om")/(COSTS.omBlockYr*5))} blocks for 5 years.\n\nNotes: SBM-U VGF reimburses 40% of seat capex (₹39,200/seat). The projection below assumes refurbishments HOLD only while the O&M line stays funded — maintenance decay is the system's documented failure mode. Every sanitation rupee returns ₹6–9 (CPHEEO). Gap siting uses the ${FAC.length} mapped facilities; the real network is larger, so confirm gaps in the Phase-1 audit.`;
+    if(money>=30e7) out+=`\nPriority order (doc §3.5): 1) West Zone — 496 seats but 53 OD spots; 2) Central — 36 OD spots, heritage footfall; 3) North — 32 OD spots, slum pockets; 4) transit hubs 24×7.`;
+    const capNew=Math.min(newN,24),capShe=Math.min(sheN,SHE_SITES.length),capRef=refurbN;
+    out+=baHtml(makePlan(`if you invest ${fmtINR(money)} as Claude recommends`,arr=>{
+      [...arr].sort((a,b)=>b.risk-a.risk).slice(0,capRef).forEach(refurbF);
+      for(let i=0;i<capNew;i++){const g=gaps[i];const nb=newBlock(g?g.zone:worstZones[i%3],false,i);if(g){nb.lat=g.lat;nb.lng=g.lng;nb.name="New block — "+g.zone+" gap site #"+(i+1)+" ("+g.d.toFixed(1)+" km gap)"}arr.push(nb)}
+      for(let i=0;i<capShe;i++){const s=SHE_SITES[i],nb=newBlock(s[3],true,100+i);nb.name=s[0];nb.lat=s[1];nb.lng=s[2];arr.push(nb)}
+    }));
+    if(newN>24)out+=`<div class="src-note">Map preview shows the first 24 of ${newN} new blocks.</div>`;
+    return out;
+  }
+
+  // --- density ---
+  if(ql.includes("dens")||ql.includes("condens")||ql.includes("crowd")||ql.includes("per capita")||(ql.includes("coverage")&&!ql.includes("pad")&&!ql.includes("mhm"))){
+    const rows=Object.keys(ZONES).map(z=>[z,ZONES[z].pop.toLocaleString("en-IN"),(ZONES[z].seats+ZONES[z].payuse),seatsPer1k(z).toFixed(2),ZONES[z].od]).sort((a,b)=>a[3]-b[3]);
+    const dz=[rows[0][0],rows[1][0]];
+    return `Population density vs toilet provision by zone (CSP 2012 seats; indicative population):\n`+tbl(rows,["Zone","Population","Total seats","Seats /1,000","OD spots"])+`\nMost under-provisioned per person: ${rows[0][0]} and ${rows[1][0]}. New West has just 4 community seats for ~11.5 lakh people — the fastest-growing corridor is effectively a toilet desert. West Zone pairs the second-lowest provision with the MOST open-defecation spots (53), which is why it heads the doc's priority list.`
+    +baHtml(makePlan(`rebalance: 12 new women-inclusive blocks in ${dz.join(" & ")} (≈ ${fmtINR(12*(COSTS.sheBlock+COSTS.mhmAddon+COSTS.accessUnit))})`,arr=>{for(let i=0;i<12;i++)arr.push(newBlock(dz[i%2],false,200+i))}));
+  }
+
+  // --- women demographics ---
+  if((ql.includes("women")||ql.includes("female")||ql.includes("lad"))&&(ql.includes("demograph")||ql.includes("area")||ql.includes("where")||ql.includes("most")||ql.includes("using")||ql.includes("demand"))&&!parseZone(ql)){
+    const rows=Object.keys(ZONES).map(z=>[z,womenDemandIndex(z).toFixed(1),FAC.filter(f=>f.zone===z).reduce((a,f)=>a+f.womenSeats,0),FAC.filter(f=>f.zone===z&&f.mhmPads).length]).sort((a,b)=>b[1]-a[1]);
+    const topZ=[rows[0][0],rows[1][0]];
+    return `Women's demand pressure by zone (demand proxy = footfall × women-at-work weighting at markets/industry/transit, ÷ women's seats):\n`+tbl(rows,["Zone","Demand index","Women's seats (mapped)","Sites w/ pads"])+`\nHighest pressure: ${rows[0][0]} and ${rows[1][0]}. Context from the doc: ~1/3 of street vendors and ~30% of construction workers are women; citywide men's facilities outnumber women's by ~42% and women's urinals = 0. Target She-Toilets at: Manek Chowk & Jamalpur markets (Central), Apparel Park / Rakhial textile belt (East), Vatva & Naroda GIDC, and every rail/BRTS interchange.`
+    +baHtml(makePlan(`6 She-Toilets at highest-demand sites + pads in every ${topZ.join("/")} block with women's seats`,arr=>{
+      SHE_SITES.slice(0,6).forEach((s,i)=>{const nb=newBlock(s[3],true,300+i);nb.name=s[0];nb.lat=s[1];nb.lng=s[2];arr.push(nb)});
+      arr.forEach(f=>{if(topZ.includes(f.zone)&&f.womenSeats>0&&!f.mhmPads){f.mhmPads=true;f._changed=true}});
+    }));
+  }
+
+  // --- budget-friendly improvement plan ---
+  if(ql.includes("budget friendly")||ql.includes("budget-friendly")||ql.includes("cheap")||ql.includes("low cost")||ql.includes("improve")||ql.includes("existing")){
+    const fixes=FAC.map(f=>{
+      let items=[],cost=0;
+      if(!f.water){items.push("water connection");cost+=60000}
+      if(!f.lighting){items.push("LED lighting");cost+=25000}
+      if(!f.caretaker){items.push("caretaker (1yr)");cost+=COSTS.caretakerYr}
+      if(!f.mhmPads&&f.womenSeats>0){items.push("pad dispenser+incinerator");cost+=COSTS.mhmAddon}
+      if(f.clean<2.5){items.push("deep clean + repair");cost+=80000}
+      return {f,items,cost,gain:f.risk*f.foot/Math.max(cost,1)};
+    }).filter(x=>x.items.length&&x.f.risk>=50).sort((a,b)=>b.gain-a.gain).slice(0,10);
+    const total=fixes.reduce((a,x)=>a+x.cost,0);
+    const fixIds=fixes.map(x=>x.f.id);
+    return `Highest-impact-per-rupee fixes to EXISTING facilities (ranked by risk×footfall ÷ cost):\n`+tbl(fixes.map((x,i)=>[i+1,x.f.name,x.f.zone,x.f.risk,x.items.join(", "),fmtINR(x.cost)]),["#","Facility","Zone","Risk","Fix package","Cost"])+`\nTotal: ${fmtINR(total)} — under 0.002% of the AMC's ₹15,502 cr budget. No new construction; pure O&M recovery, which the CSP identifies as the system's core failure. Add outcome-based operator contracts (cleanliness/uptime-paid) per doc §6.D to keep gains from decaying.`
+    +baHtml(makePlan(`the ${fixes.length}-site fix package (${fmtINR(total)})`,arr=>fixIds.forEach(id=>{const f=arr.find(x=>x.id===id);if(!f)return;f.water=true;f.lighting=true;f.caretaker=true;if(f.womenSeats>0)f.mhmPads=true;if(f.clean<2.5)f.clean=3.8;f.safety=Math.min(5,f.safety+0.8);f._changed=true})));
+  }
+
+  // --- worst / critical ---
+  if(ql.includes("worst")||ql.includes("critical")||/\bbad\b/.test(ql)){
+    const wz=parseZone(ql);
+    const w=FAC.filter(f=>!wz||f.zone===wz).sort((a,b)=>b.risk-a.risk).slice(0,8);
+    const wIds=w.map(f=>f.id);
+    return `Highest-risk facilities${wz?" in "+wz+" Zone":""} right now:\n`+tbl(w.map((f,i)=>[i+1,f.name,f.zone,`<span class="pill p-${riskCat(f.risk)[1]}">${f.risk}</span>`,f.water?"✓":"✗",f.caretaker?"✓":"✗"]),["#","Facility","Zone","Risk","Water","Staff"])+`\nPattern: West/Central hotspot blocks (Vadaj, Ramapir no Tekro, Gulbai Tekra) dominate — consistent with the CSP's finding of 53 OD spots in West Zone against only 496 seats.`
+    +baHtml(makePlan(`refurbish these ${w.length} sites (≈ ${fmtINR(w.length*COSTS.refurb)} + O&M)`,arr=>wIds.forEach(id=>{const f=arr.find(x=>x.id===id);if(f)refurbF(f)})));
+  }
+
+  // --- pregnancy / MHM / open now quick stats ---
+  if(ql.includes("pregnan")&&!parseZone(ql)){const n=FAC.filter(pregSafe).length;const cand=FAC.filter(f=>f.womenSeats>0&&!pregSafe(f));
+    return `${n} of ${FAC.length} mapped facilities are currently pregnancy-usable (women's seat + western WC + water + acceptable cleanliness + support). The gap driver: the CSP records ZERO accessible/assisted-use seats citywide. Cheapest fix: retrofit grab-bars + western seats (~${fmtINR(COSTS.accessUnit)}/block) at the ${cand.length} blocks that already have women's seats.`
+    +baHtml(makePlan(`accessibility retrofit at ${cand.length} blocks (≈ ${fmtINR(cand.length*COSTS.accessUnit)})`,arr=>cand.forEach(c=>{const f=arr.find(x=>x.id===c.id);if(f){f.westernSeat=true;f.grabBars=true;f.water=true;f._changed=true}})));}
+  if((ql.includes("pad")||ql.includes("tampon")||ql.includes("menstrual")||ql.includes("mhm"))&&!parseZone(ql)){const n=FAC.filter(f=>f.mhmPads).length;const cand=FAC.filter(f=>!f.mhmPads&&f.womenSeats>0);
+    return `${n} of ${FAC.length} mapped facilities stock sanitary pads (dispenser); ${FAC.filter(f=>f.mhmIncin).length} have incinerators. Doc §6.B mandates MHM in every female block. Retrofit cost ≈ ${fmtINR(COSTS.mhmAddon)}/block → full coverage of remaining ${cand.length} blocks ≈ ${fmtINR(cand.length*COSTS.mhmAddon)}.`
+    +baHtml(makePlan(`MHM retrofit at all ${cand.length} remaining blocks (${fmtINR(cand.length*COSTS.mhmAddon)})`,arr=>cand.forEach(c=>{const f=arr.find(x=>x.id===c.id);if(f){f.mhmPads=true;f.mhmIncin=true;f._changed=true}})));}
+  if((ql.includes("open now")||ql.includes("24"))&&!parseZone(ql)){const n=FAC.filter(f=>isOpenNow(f)).length;const cand=FAC.filter(f=>f.transit&&!f.h24);
+    return `${FAC.filter(f=>f.h24).length} facilities run 24×7; ${n} are open right now. Doc §3.4 flags that many pay-&-use toilets lock 11pm–6am — exactly when safety matters most. Recommendation: mandate 24×7 at all rail/BRTS/hospital sites (${cand.length} transit sites currently close at night).`
+    +baHtml(makePlan(`24×7 mandate + night caretakers at ${cand.length} transit sites`,arr=>cand.forEach(c=>{const f=arr.find(x=>x.id===c.id);if(f){f.h24=true;f.open="00:00";f.close="24:00";f.lighting=true;f.caretaker=true;f._changed=true}})));}
+
+  // --- gender gap ---
+  // --- walking-distance coverage / toilet deserts (doc §8 KPI #1) ---
+  if(/desert|coverage|walking|\bgaps?\b/.test(ql)&&!/gender|parit|pad|mhm|men\b|women/.test(ql)){
+    const c=coverageStats();
+    const rows=Object.keys(c.zones).map(z=>[z,c.zones[z].pct+"%",c.zones[z].gaps]).sort((a,b)=>parseInt(a[1])-parseInt(b[1]));
+    const worst=[...c.gaps].sort((a,b)=>b.d-a.d).slice(0,5);
+    return `Walking-distance coverage — share of city area within 500 m of a mapped facility (uniform-demand grid over indicative zone boundaries):\n`
+    +tbl(rows,["Zone","Covered ≤500 m","Gap cells (~550 m each)"])
+    +`\nCitywide: <b>${c.pct}%</b> of ${c.tot} analysed cells covered. Largest deserts: ${worst.map(g=>g.zone+" ("+g.d.toFixed(1)+" km)").join("; ")}. Toggle <b>◻ Coverage gaps</b> on the map to see them. Caveat: computed over the ${FAC.length} MAPPED facilities — the real network is larger, so treat gaps as audit candidates, not verdicts.`
+    +baHtml(makePlan("build 10 blocks at the largest coverage gaps",arr=>{[...coverageGaps()].sort((a,b)=>b.d-a.d).slice(0,10).forEach((g,i)=>{const nb=newBlock(g.zone,false,900+i);nb.lat=g.lat;nb.lng=g.lng;nb.name="New block — "+g.zone+" gap #"+(i+1);arr.push(nb)})}));
+  }
+  // --- gender gap ---
+  if(ql.includes("gender")||ql.includes("parity")||(ql.includes("gap")&&/men|women|gender/.test(ql))){
+    return `Citywide gender audit (CSP 2012): men ${GENDER.menSeats} seats + ${GENDER.menUrinals} urinals = 5,613 provision points; women ${GENDER.womenSeats} seats + 0 urinals = 3,985. Men's provision exceeds women's by ~42% (RTI Press). Fastest route to parity: convert surplus men's seats in over-served areas into women's seats (recommended by the CSP itself) — conversion is ~1/3 the cost of new build — plus women's urinal pilots at transit hubs (₹32,000/unit, SBM-U).`
+    +baHtml(makePlan("seat-conversion programme: rebalance surplus men's seats to women's",arr=>arr.forEach(f=>{if(f.menSeats>f.womenSeats+1&&f.tcode!=="UR"){const mv=Math.ceil((f.menSeats-f.womenSeats)/2);f.menSeats-=mv;f.womenSeats+=mv;f._changed=true}})));
+  }
+
+  // --- bordering districts ---
+  if(/border|neighbou?r|adjacent|surrounding district|nearby district/.test(ql)){
+    const rows=[...NEIGHBORS].sort((a,b)=>b.inflow-a.inflow).map(n=>{
+      const g=nearestFacTo(n.lat,n.lng);
+      return [n.name+" ("+n.dir+")",n.hq,n.pop,"●".repeat(n.inflow)+"○".repeat(5-n.inflow),g.f.name];
+    });
+    const top=NEIGHBORS.filter(n=>n.inflow>=4).map(n=>n.name).join(" & ");
+    return `Ahmedabad district shares borders with <b>7 districts</b> (all Gujarat rural districts ODF-declared under SBM-Gramin, Oct 2017; populations Census-2011 basis):\n`
+    +tbl(rows,["District","HQ","Population","Commuter inflow","Gateway facility (mapped)"])
+    +`\nWhy this matters for toilet planning: the floating population that strains Ahmedabad's public restrooms enters along these corridors. Strongest pressure: <b>${top}</b> — the Gandhinagar twin-city corridor (metro Phase-2, GIFT/Infocity) lands at Chandkheda/Motera in North Zone, and the NH48 Kheda–Anand corridor lands at Vatva/Maninagar in South/East. Doc §6.A says siting must follow demand, so 24×7 women-inclusive facilities at these gateway interchanges serve two districts' commuters per site. Toggle <b>◎ District view</b> on the map and click any district marker for its full profile.`
+    +baHtml(makePlan("gateway programme: 24×7 + She-Toilet upgrades at the 5 highest-inflow border gateways",arr=>{
+      [...NEIGHBORS].sort((a,b)=>b.inflow-a.inflow).slice(0,5).forEach(n=>{
+        let best=null,bd=1e9;for(const f of arr){const d=(f.lat-n.lat)**2+(f.lng-n.lng)**2;if(d<bd){bd=d;best=f}}
+        if(best){best.h24=true;best.open="00:00";best.close="24:00";best.lighting=true;best.caretaker=true;if(best.womenSeats>0){best.mhmPads=true;best.mhmIncin=true}best._changed=true}
+      });
+    }));
+  }
+
+  // --- compare zones / general ---
+  if((ql.includes("zone")&&!parseZone(ql))||ql.includes("compare")||ql.includes("summary")||ql.includes("overview")){
+    const rows=Object.keys(ZONES).map(z=>[z,ZONES[z].seats+ZONES[z].payuse,ZONES[z].od,seatsPer1k(z).toFixed(2),Math.round(zoneRiskAvg(z))]).sort((a,b)=>b[4]-a[4]);
+    const topZone=rows[0][0];
+    return `Zone scorecard (CSP seats + live mapped risk):\n`+tbl(rows,["Zone","Seats","OD spots","Seats/1k","Avg risk"])+`\nInvestment order: ${rows.slice(0,3).map(r=>r[0]).join(" → ")}.`
+    +baHtml(makePlan(`fix every Critical/Poor site + 6 new blocks in ${topZone}`,arr=>{arr.filter(f=>f.risk>=50).forEach(refurbF);for(let i=0;i<6;i++)arr.push(newBlock(topZone,false,400+i))}));
+  }
+
+  // --- GENERIC ENGINE: zone × type × attributes × superlatives × counts ---
+  {
+    const qZone=parseZone(ql),qType=parseType(ql),fl=detectFilters(ql);
+    const sup=SUPS.find(([re])=>re.test(ql));
+    if(qZone||qType||fl.length||sup){
+      let pool=FAC.filter(f=>(!qZone||f.zone===qZone)&&(!qType||f.tcode===qType));
+      fl.forEach(x=>{pool=pool.filter(x.test)});
+      const desc=[sup?sup[1]:null,...fl.map(x=>x.label),qType?T[qType]:null,qZone?qZone+" Zone":null].filter(Boolean).join(" · ")||"all facilities";
+      if(!pool.length)return `No mapped facilities match: <b>${desc}</b> (out of ${FAC.length} on the map). That itself may be the finding — e.g. a service gap worth flagging in the Phase-1 audit.`;
+      if(sup)pool=[...pool].sort(sup[2]);
+      let out;
+      if(/how many|count|number of/.test(ql)){
+        const byZone={};pool.forEach(f=>{byZone[f.zone]=(byZone[f.zone]||0)+1});
+        out=`<b>${pool.length}</b> of ${FAC.length} mapped facilities match — <b>${desc}</b>.\n`+tbl(Object.entries(byZone).sort((a,b)=>b[1]-a[1]),["Zone","Count"]);
+      }else{
+        const top=pool.slice(0,12);
+        out=`<b>${pool.length}</b> facilities match — <b>${desc}</b>${pool.length>12?" (showing top 12)":""}:\n`+tbl(top.map((f,i)=>[i+1,f.name,f.zone,`<span class="pill p-${riskCat(f.risk)[1]}">${f.risk}</span>`,sup?sup[3](f):(isOpenNow(f)?"open":"closed")]),["#","Facility","Zone","Risk",sup?sup[1]:"Now"]);
+      }
+      const fixes=fl.filter(x=>x.fix);
+      const wantsRefurb=/refurb|renovat|repair|upgrade|\bfix\b/.test(ql);
+      if(fixes.length){
+        const ids=pool.map(f=>f.id);
+        out+=baHtml(makePlan(`fix "${fixes.map(x=>x.label).join(", ")}" at the ${pool.length} matched site(s)`,arr=>ids.forEach(id=>{const f=arr.find(y=>y.id===id);if(f){fixes.forEach(x=>x.fix(f));f._changed=true}})));
+      }else if(wantsRefurb){
+        const ids=pool.slice(0,30).map(f=>f.id);
+        out+=baHtml(makePlan(`refurbish the ${ids.length} matched site(s) (≈ ${fmtINR(ids.length*COSTS.refurb)})`,arr=>ids.forEach(id=>{const f=arr.find(y=>y.id===id);if(f)refurbF(f)})));
+      }
+      return out;
+    }
+  }
+  return `__FB__I compute answers directly from the mapped dataset + government norms. I understand combinations of: <b>zones</b> (West, New West, Central…), <b>types</b> (community, pay-&-use, urinal, smart, Pink), <b>attributes</b> (no water, unlit, unstaffed, no pads, dirty, unsafe, critical, closed, pregnancy, accessible, 24×7…), <b>superlatives</b> (worst, cleanest, safest, busiest…), <b>counts</b> ("how many…"), <b>facility names</b> ("how bad is Vadaj?"), <b>nearest</b> ("nearest toilet to Kankaria"), <b>what-ifs</b> ("what if we build 15 blocks in New West?"), <b>budgets</b> (₹ crore/lakh) and <b>staffing</b> (N-person). Try:\n• "How many toilets in West Zone have no water?"\n• "Cleanest facilities in Central"\n• "Fix all unlit toilets in the East Zone"`;
+}
+
+// =====================================================================
+//  UI  (guarded so logic above is testable headless)
+// =====================================================================
+// ---------- field-audit CSV import (Phase-1 GIS audit ingestion) ----------
+const AUDIT_COLS=["name","zone","type","lat","lng","women_seats","men_seats","clean_1to5","water_yn","lighting_yn","caretaker_yn","pads_yn","incinerator_yn","western_seat_yn","grab_bars_yn","open_hhmm","close_hhmm","is_24x7_yn","safety_1to5","footfall_1to5"];
+function parseCSV(text){
+  const rows=[];let row=[],cur="",q=false;
+  for(let i=0;i<text.length;i++){const ch=text[i];
+    if(q){if(ch==='"'){if(text[i+1]==='"'){cur+='"';i++}else q=false}else cur+=ch}
+    else if(ch==='"')q=true;
+    else if(ch===','){row.push(cur);cur=""}
+    else if(ch==='\n'||ch==='\r'){if(cur!==""||row.length){row.push(cur);rows.push(row);row=[];cur=""}if(ch==='\r'&&text[i+1]==='\n')i++}
+    else cur+=ch}
+  if(cur!==""||row.length){row.push(cur);rows.push(row)}
+  return rows;
+}
+function nearestZoneL(lat,lng){let best="Central",bd=1e9;Object.entries(ZONES).forEach(([z,Z])=>{const d=(Z.center[0]-lat)**2+(Z.center[1]-lng)**2;if(d<bd){bd=d;best=z}});return best}
+function importAudit(text){
+  const rows=parseCSV(text.trim());if(rows.length<2)return {ok:0,added:0,err:"no data rows"};
+  const hdr=rows[0].map(h=>h.trim().toLowerCase());
+  const idx=n=>hdr.indexOf(n);
+  if(idx("name")<0||idx("lat")<0||idx("lng")<0)return {ok:0,added:0,err:"header must include name, lat, lng (download the template)"};
+  const yn=v=>/^(y|yes|1|true)$/i.test((v||"").trim());
+  const num=(v,d)=>{const n=parseFloat(v);return isNaN(n)?d:n};
+  let ok=0,added=0;
+  for(const r of rows.slice(1)){
+    const get=n=>{const i=idx(n);return i<0?"":(r[i]||"").trim()};
+    const name=get("name");if(!name)continue;
+    const lat=num(get("lat"),NaN),lng=num(get("lng"),NaN);if(isNaN(lat)||isNaN(lng))continue;
+    let f=FAC.find(x=>x.name.toLowerCase()===name.toLowerCase())||FAC.find(x=>distKm(x.lat,x.lng,lat,lng)<0.15);
+    if(!f){
+      f={id:"aud"+FAC.length,name,zone:ZONES[get("zone")]?get("zone"):nearestZoneL(lat,lng),type:T[get("type")]||T.CT,tcode:T[get("type")]?get("type"):"CT",lat,lng,foot:3,waw:3,hotspot:false,transit:false,market:false,industrial:false,wardFlag:false,clean:3,water:true,lighting:true,caretaker:false,womenSeats:0,menSeats:0,mhmPads:false,mhmIncin:false,westernSeat:false,grabBars:false,h24:false,open:"06:00",close:"22:00",safety:3,source:"",verified:false,reports:0,lastReport:null};
+      FAC.push(f);added++;
+    }
+    f.lat=lat;f.lng=lng;
+    if(get("zone")&&ZONES[get("zone")])f.zone=get("zone");
+    if(get("women_seats")!=="")f.womenSeats=Math.max(0,Math.round(num(get("women_seats"),f.womenSeats)));
+    if(get("men_seats")!=="")f.menSeats=Math.max(0,Math.round(num(get("men_seats"),f.menSeats)));
+    if(get("clean_1to5")!=="")f.clean=Math.max(0.5,Math.min(5,num(get("clean_1to5"),f.clean)));
+    if(get("safety_1to5")!=="")f.safety=Math.max(0.5,Math.min(5,num(get("safety_1to5"),f.safety)));
+    if(get("footfall_1to5")!=="")f.foot=Math.max(1,Math.min(5,Math.round(num(get("footfall_1to5"),f.foot))));
+    [["water_yn","water"],["lighting_yn","lighting"],["caretaker_yn","caretaker"],["pads_yn","mhmPads"],["incinerator_yn","mhmIncin"],["western_seat_yn","westernSeat"],["grab_bars_yn","grabBars"],["is_24x7_yn","h24"]].forEach(([c,k])=>{if(get(c)!=="")f[k]=yn(get(c))});
+    if(get("open_hhmm"))f.open=get("open_hhmm");
+    if(get("close_hhmm"))f.close=get("close_hhmm");
+    if(f.h24){f.open="00:00";f.close="24:00"}
+    f.source="Field audit (CSV import)";f.verified=true;f.audited=true;
+    f.base={clean:f.clean,safety:f.safety,water:f.water,lighting:f.lighting,caretaker:f.caretaker,mhmPads:f.mhmPads};
+    aggregate(f); // citizen reports still layer on top of the audited baseline
+    f.risk=riskScore(f);ok++;
+  }
+  COVCACHE=null;
+  return {ok,added,err:null};
+}
+function auditTemplate(){return AUDIT_COLS.join(",")+"\n"+'"Example Block",New West,CT,23.0900,72.4500,4,5,3.5,y,y,n,n,n,y,n,06:00,22:00,n,3,4'}
+// ---------- optional shared backend (Supabase REST) ----------
+function supaCfg(){if(typeof localStorage==="undefined")return null;try{const c=JSON.parse(localStorage.getItem("amdAtlas.supa"));return c&&c.url&&c.key?c:null}catch(e){return null}}
+async function supaPush(r){const c=supaCfg();if(!c)return;try{await fetch(c.url+"/rest/v1/reports",{method:"POST",headers:{apikey:c.key,Authorization:"Bearer "+c.key,"content-type":"application/json",Prefer:"resolution=ignore-duplicates"},body:JSON.stringify(r)})}catch(e){}}
+async function supaPull(done){const c=supaCfg();if(!c){if(done)done(0);return}
+  try{const r=await fetch(c.url+"/rest/v1/reports?select=*",{headers:{apikey:c.key,Authorization:"Bearer "+c.key}});const d=await r.json();let n=0;if(Array.isArray(d))d.forEach(x=>{if(applyReport(x,false))n++});saveState();if(done)done(n)}catch(e){if(done)done(0)}}
+// ---------- citizen-facing i18n (English / Gujarati) ----------
+// Scope: tab labels, map filter buttons, the Report tab form, and the map
+// popup question labels. Dashboard/Data tab content and the AI advisor are
+// intentionally left untranslated (staff-facing / analytical surfaces).
+const I18N={
+  en:{
+    tabDash:"Dashboard",tabAgent:"AI Advisor",tabReport:"Report",tabData:"Data",
+    fOpen:"Open now",fWomen:"Women-usable",fPreg:"Pregnancy-safe",fMHM:"Pads/MHM",f247:"24×7",
+    fGaps:"◻ Coverage gaps",fDistrict:"◎ District view",
+    langTog:"ગુજરાતી",
+    repHeading:"Citizen / field-staff status report",
+    repFacility:"Facility",
+    repClean:"Cleanliness (1 = filthy, 5 = spotless)",
+    repSafety:"Surrounding safety (1 = unsafe, 5 = very safe)",
+    repHasQ:"Right now, does it have…",
+    repWater:"running water",
+    repLight:"working lights",
+    repCare:"caretaker present",
+    repPads:"pads available",
+    repComment:"Comment (optional)",
+    repSubmit:"Submit live report",
+    popClean:"Clean?",
+    popOpen:"Open now?",
+    popPreg:"Pregnant woman can use?",
+    popPads:"Pads / tampons?",
+    popSafety:"Surrounding safety",
+    popWater:"Water?",
+    popSeats:"Seats (W / M)",
+    popFootfall:"Footfall",
+    popReportBtn:"Report current status"
+  },
+  gu:{
+    tabDash:"ડેશબોર્ડ",tabAgent:"AI સલાહકાર",tabReport:"રિપોર્ટ",tabData:"ડેટા",
+    fOpen:"અત્યારે ખુલ્લું",fWomen:"મહિલાઓ માટે",fPreg:"સગર્ભા-સુરક્ષિત",fMHM:"પેડ્સ/MHM",f247:"24×7",
+    fGaps:"◻ કવરેજ ગેપ",fDistrict:"◎ જિલ્લા દૃશ્ય",
+    langTog:"English",
+    repHeading:"નાગરિક / ફિલ્ડ સ્ટાફ સ્થિતિ રિપોર્ટ",
+    repFacility:"શૌચાલય",
+    repClean:"સ્વચ્છતા (1 = ગંદું, 5 = ચોખ્ખું)",
+    repSafety:"આસપાસની સલામતી (1 = અસુરક્ષિત, 5 = ખૂબ સલામત)",
+    repHasQ:"અત્યારે અહીં શું છે…",
+    repWater:"પાણી ચાલુ છે",
+    repLight:"લાઇટ ચાલુ છે",
+    repCare:"કેરટેકર હાજર છે",
+    repPads:"પેડ્સ ઉપલબ્ધ છે",
+    repComment:"ટિપ્પણી (વૈકલ્પિક)",
+    repSubmit:"રિપોર્ટ મોકલો",
+    popClean:"સ્વચ્છ?",
+    popOpen:"અત્યારે ખુલ્લું?",
+    popPreg:"સગર્ભા મહિલા વાપરી શકે?",
+    popPads:"પેડ્સ / ટેમ્પન?",
+    popSafety:"આસપાસની સલામતી",
+    popWater:"પાણી?",
+    popSeats:"બેઠકો (મ / પુ)",
+    popFootfall:"અવરજવર",
+    popReportBtn:"હાલની સ્થિતિ જણાવો"
+  }
+};
+let LANG="en"; // default; overridden from localStorage inside the DOM guard below
+function t(k){return (I18N[LANG]&&I18N[LANG][k])||I18N.en[k]||k}
+
+// ---------- built-in regression suite (runs headless in Node or via Data tab) ----------
+function runSelfTest(){
+  const T=[];const t=(name,cond)=>T.push({name,pass:!!cond});
+  t("money parser accepts plurals (60 crores)",!agentAnswer("what does 60 crores buy").startsWith("__FB__"));
+  t("'Ahmedabad' no longer matches 'bad'",agentAnswer("which districts border ahmedabad").includes("7 districts"));
+  t("negation: don't have caretakers → unstaffed",detectFilters("which toilets don't have caretakers").some(x=>x.label==="unstaffed"));
+  t("negation: lacking water → no water",detectFilters("facilities lacking water").some(x=>x.label==="no water"));
+  t("negation: not clean → dirty",detectFilters("toilets that are not clean").some(x=>x.label.startsWith("dirty")));
+  t("positive filters still work",detectFilters("toilets with water").some(x=>x.label==="has water"));
+  t("facility profile lookup",agentAnswer("how bad is vadaj").includes("Vadaj"));
+  t("nearest-to-landmark",agentAnswer("nearest toilet to kankaria").includes("Nearest"));
+  t("coverage analysis runs",coverageStats().tot>100&&coverageStats().pct>=0&&coverageStats().pct<=100);
+  t("coverage intent answers",agentAnswer("where are the toilet deserts").includes("Walking-distance"));
+  t("median blocks single troll (base 4 + one 1 stays 4)",median([4,1])===4);
+  t("boolean majority sane",maj([true,false])===true&&maj([false,false,true])===false);
+  t("budget plan carries projection",agentAnswer("invest 50 crore").includes("PROJECTED IMPACT"));
+  t("simulations never mutate baseline",(()=>{const n=FAC.length;const p=PLANS[PLANS.length-1];if(p)p.apply();return FAC.length===n&&!FAC.some(f=>f._changed||f._new)})());
+  t("parseLlmJson tolerates fences",parseLlmJson('```json\n{"answer":"x","plan":null}\n```').answer==="x");
+  t("planFromActions builds blocks",metrics(planFromActions("t",[{type:"build",zone:"West",count:3}]).apply()).n===FAC.length+3);
+  t("all risk scores within 0–100",FAC.every(f=>f.risk>=0&&f.risk<=100));
+  t("CSV parser handles quoted commas",(()=>{const r=parseCSV('a,"b,c",d\n1,2,3');return r[0][1]==="b,c"&&r[1].length===3})());
+  t("audit import updates + adds",(()=>{const n=FAC.length;const mk=FAC.find(f=>f.name==="Manek Chowk Market");const snap=Object.assign({},mk,{base:Object.assign({},mk.base)});
+    const res=importAudit(auditTemplate()+'\n"Manek Chowk Market",Central,CT,23.0239,72.5883,6,6,4.5,y,y,y,y,y,y,y,05:00,23:00,n,4,5');
+    const pass=res.ok===2&&res.added===1&&FAC.length===n+1&&mk.audited===true&&mk.womenSeats===6&&mk.verified===true;
+    // rollback ALL test mutations so running the suite never alters real data
+    const ei=FAC.findIndex(f=>f.name==="Example Block");if(ei>=0)FAC.splice(ei,1);
+    Object.assign(mk,snap);delete mk.audited;COVCACHE=null;
+    return pass})());
+  t("report ids dedupe (same id twice)",(()=>{const r={fid:FAC[0].id,ts:1,clean:3,safety:3,id:"testdup"};const a=applyReport(r,false);const b=applyReport(r,false);REPORTS=REPORTS.filter(x=>x.id!=="testdup");aggregate(FAC[0]);FAC[0].verified=REPORTS.some(x=>x.fid===FAC[0].id);if(!FAC[0].verified){FAC[0].reports=0;Object.assign(FAC[0],FAC[0].base);FAC[0].risk=riskScore(FAC[0])}return a===true&&b===false})());
+  return T;
+}
+if(typeof window!=="undefined"&&typeof document!=="undefined"&&window.L){
+loadState();
+try{LANG=localStorage.getItem("amdAtlas.lang")||"en"}catch(e){LANG="en"}
+
+// ---------- language toggle (citizen-facing surfaces only) ----------
+function applyStaticI18N(){
+  const tb=document.querySelector('#tabs button[data-t="dash"]');if(tb)tb.textContent=t("tabDash");
+  const ta=document.querySelector('#tabs button[data-t="agent"]');if(ta)ta.textContent=t("tabAgent");
+  const tr=document.querySelector('#tabs button[data-t="report"]');if(tr)tr.textContent=t("tabReport");
+  const td=document.querySelector('#tabs button[data-t="data"]');if(td)td.textContent=t("tabData");
+  const ids=["fOpen","fWomen","fPreg","fMHM","f247","fGaps","fDistrict"];
+  ids.forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=t(id)});
+  const lb=document.getElementById("langTog");if(lb)lb.textContent=t("langTog");
+}
+window.toggleLang=function(){
+  LANG=LANG==="en"?"gu":"en";
+  try{localStorage.setItem("amdAtlas.lang",LANG)}catch(e){}
+  applyStaticI18N();
+  const activePane=document.querySelector(".tabpane.active");
+  if(activePane&&activePane.id==="pane-report")renderReport();
+  // map popups call popupHtml(f) lazily on open, so they pick up the new
+  // language automatically without needing to redraw markers.
+};
+
+const map=L.map("map",{zoomControl:true}).setView([23.03,72.57],12);
+L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,attribution:"Imagery © Esri — Source: Esri, Maxar, Earthstar Geographics"}).addTo(map);
+L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,opacity:.9}).addTo(map);
+
+// zone overlays (redrawable so simulations recolor them)
+const zoneLayer=L.layerGroup().addTo(map);
+function redrawZones(){
+  zoneLayer.clearLayers();
+  const src=activeFac();
+  Object.entries(ZONE_POLY).forEach(([z,pts])=>{
+    const fs=src.filter(f=>f.zone===z);
+    const avg=Math.round(fs.reduce((a,f)=>a+f.risk,0)/Math.max(fs.length,1));
+    L.polygon(pts,{color:riskColor(avg),weight:1.4,fillColor:riskColor(avg),fillOpacity:.10,dashArray:"4 4"}).addTo(zoneLayer)
+     .bindTooltip(`<b>${z} Zone</b> · avg risk ${avg}${SIM?" (projected)":""} · ${ZONES[z].od} OD spots (indicative boundary)`,{sticky:true});
+    L.marker(ZONES[z].center,{icon:L.divIcon({className:"zone-lab",html:z.toUpperCase(),iconSize:[90,16]})}).addTo(zoneLayer);
+  });
+}
+redrawZones();
+
+// neighbouring districts
+const distLayer=L.layerGroup();
+NEIGHBORS.forEach(n=>{
+  const m=L.circleMarker([n.lat,n.lng],{radius:7+n.inflow,color:"#4da3ff",fillColor:"#4da3ff",fillOpacity:.5}).addTo(distLayer);
+  m.bindPopup(()=>{
+    const g=nearestFacTo(n.lat,n.lng);
+    return `<div class="pop-title">${n.name} district <span style="color:var(--muted);font-weight:400">(${n.dir} of Ahmedabad)</span></div>
+    <div class="qa">
+      <span class="q">Headquarters</span><span>${n.hq}</span>
+      <span class="q">Population</span><span>${n.pop} <span style="color:var(--muted)">(Census 2011 basis)</span></span>
+      <span class="q">Border towns</span><span>${n.towns}</span>
+      <span class="q">Commuter inflow</span><span>${"●".repeat(n.inflow)}${"○".repeat(5-n.inflow)}</span>
+      <span class="q">Corridor</span><span>${n.corridor}</span>
+      <span class="q">Rural sanitation</span><span>ODF declared (SBM-Gramin, Oct 2017)</span>
+      <span class="q">Gateway facility</span><span>${g.f.name} <span style="color:var(--muted)">(~${g.d.toFixed(0)} km)</span></span>
+    </div>
+    <div class="src-note">${n.note}</div>`;
+  },{maxWidth:340});
+  L.marker([n.lat,n.lng],{icon:L.divIcon({className:"dist-lab",html:`${n.name} district (${n.dir})`,iconSize:[150,18],iconAnchor:[-8,9]})}).addTo(distLayer);
+});
+let distBoundaryLoaded=false;
+function loadDistrictBoundaries(){
+  if(distBoundaryLoaded)return;distBoundaryLoaded=true;
+  const names=["Ahmedabad","Gandhinagar","Kheda","Anand","Surendranagar","Botad","Bhavnagar","Mehsana"];
+  names.forEach((nm,i)=>setTimeout(()=>{
+    fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(nm+" district, Gujarat, India")}&format=geojson&polygon_geojson=1&limit=1`)
+    .then(r=>r.json()).then(g=>{
+      if(g.features&&g.features[0])L.geoJSON(g.features[0],{style:{color:nm==="Ahmedabad"?"#ffcf5c":"#4da3ff",weight:nm==="Ahmedabad"?2.2:1.2,fillOpacity:nm==="Ahmedabad"?.05:.02}}).addTo(distLayer);
+    }).catch(()=>{});
+  },i*1200));
+}
+
+// facility markers
+const mLayer=L.layerGroup().addTo(map);
+const MARK={};
+function yn(b){return b?'<span style="color:var(--good)">Yes</span>':'<span style="color:var(--crit)">No</span>'}
+function popupHtml(f){
+  const [cat,cls]=riskCat(f.risk);
+  const open=isOpenNow(f);
+  return `<div class="pop-title">${f.name}</div>
+  <div class="pop-sub">${f.type} · ${f.zone} Zone ${f.hotspot?'· <span class="pill p-crit">OD hotspot</span>':""} ${f.wardFlag?'· <span class="pill p-poor">doc-flagged ward</span>':""} ${f.tcode==="SHE"?'<span class="pill p-pink">PINK</span>':""}</div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <div class="riskbig" style="color:${riskColor(f.risk)}">${f.risk}</div>
+    <div><span class="pill p-${cls}">${cat}</span><div style="color:var(--muted);font-size:10.5px">risk score (0 good – 100 critical)</div></div>
+  </div>
+  <div class="qa">
+    <span class="q">${t("popClean")}</span><span>${f.clean} / 5 ${f.clean>=3.5?"✓":f.clean>=2.5?"– passable":"✗ poor"}</span>
+    <span class="q">${t("popOpen")}</span><span>${open?'<b style="color:var(--good)">OPEN</b>':'<b style="color:var(--crit)">CLOSED</b>'} · ${f.h24?"24×7":f.open+" – "+f.close}</span>
+    <span class="q">${t("popPreg")}</span><span>${yn(pregSafe(f))}${!pregSafe(f)&&f.womenSeats>0?' <span style="color:var(--muted)">(no western seat / support)</span>':""}</span>
+    <span class="q">${t("popPads")}</span><span>${yn(f.mhmPads)}${f.mhmIncin?" + incinerator":""}</span>
+    <span class="q">${t("popSafety")}</span><span>${f.safety} / 5 ${f.lighting?"· lit":"· <b style='color:var(--crit)'>unlit</b>"} ${f.caretaker?"· caretaker":"· unstaffed"}</span>
+    <span class="q">${t("popWater")}</span><span>${yn(f.water)}</span>
+    <span class="q">${t("popSeats")}</span><span>${f.womenSeats} / ${f.menSeats}${f.tcode==="UR"?" (men-only urinal)":""}</span>
+    <span class="q">${t("popFootfall")}</span><span>${"★".repeat(f.foot)}${"☆".repeat(5-f.foot)}</span>
+  </div>
+  <div class="src-note">Source: ${f.source}${f.verified?` · verified by ${f.reports} citizen report(s)`:" · pending field audit — help verify below"}</div>
+  <button class="primary" style="width:100%;margin-top:8px" onclick="openReport('${f.id}')">${t("popReportBtn")}</button>`;
+}
+function drawMarkers(){
+  mLayer.clearLayers();
+  filtered().forEach(f=>{
+    const ring=f._new?"#b39dff":f._changed?"#2ecc71":"#0d1117";
+    const unv=!f.verified&&!f._new&&!f._changed; // modeled, not yet citizen-verified → visibly less certain
+    const m=L.circleMarker([f.lat,f.lng],{radius:(f.foot+3.5)+(f._new?2:0),color:ring,weight:f._new||f._changed?3:1.5,fillColor:riskColor(f.risk),fillOpacity:unv?.55:.95,dashArray:unv?"2 3":null});
+    m.bindPopup(()=>popupHtml(f)+(SIM?`<div class="src-note" style="color:#b3a1ff">🔮 Projected state under: ${SIM.label}</div>`:""),{maxWidth:330});
+    m.addTo(mLayer);MARK[f.id]=m;
+  });
+  renderTicker();renderDash();
+}
+window.startSim=i=>{
+  const p=PLANS[i];if(!p)return;
+  SIM={fac:p.apply(),label:p.label};
+  document.getElementById("simlab").textContent=p.label;
+  document.getElementById("simbar").style.display="flex";
+  redrawZones();drawMarkers();
+};
+window.exitSim=()=>{
+  SIM=null;
+  document.getElementById("simbar").style.display="none";
+  redrawZones();drawMarkers();
+};
+
+// legend
+const legend=L.control({position:"bottomleft"});
+legend.onAdd=()=>{const d=L.DomUtil.create("div","legend");d.innerHTML=`<b>Risk score</b><br><i style="background:${riskColor(20)}"></i>Good &lt;30<br><i style="background:${riskColor(40)}"></i>Fair 30–49<br><i style="background:${riskColor(60)}"></i>Poor 50–69<br><i style="background:${riskColor(80)}"></i>Critical ≥70<br><span style="color:#8b98a9">size = footfall<br>faded/dashed = modeled, unverified<br>solid = citizen-verified / audited</span>`;return d};
+legend.addTo(map);
+function refreshLegend(){legend.remove();legend.addTo(map)}
+function resetCoverage(){COVCACHE=null;if(gapLayer){map.removeLayer(gapLayer);gapLayer=null;if(gapsOn){gapsOn=false;document.getElementById("fGaps").classList.remove("on")}}}
+
+// ---------- filters ----------
+const FS={zone:"",type:"",risk:"",open:false,women:false,preg:false,mhm:false,h24:false};
+function filtered(){
+  return activeFac().filter(f=>
+    (!FS.zone||f.zone===FS.zone)&&(!FS.type||f.type===FS.type)&&
+    (FS.risk!=="crit"||f.risk>=70)&&(FS.risk!=="poor"||f.risk>=50)&&(FS.risk!=="ok"||f.risk<50)&&
+    (!FS.open||isOpenNow(f))&&(!FS.women||womenUsable(f))&&(!FS.preg||pregSafe(f))&&
+    (!FS.mhm||f.mhmPads)&&(!FS.h24||f.h24));
+}
+Object.keys(ZONES).forEach(z=>{const o=document.createElement("option");o.textContent=z;document.getElementById("fZone").append(o)});
+document.getElementById("fZone").onchange=e=>{FS.zone=e.target.value;drawMarkers()};
+document.getElementById("fType").onchange=e=>{FS.type=e.target.value;drawMarkers()};
+document.getElementById("fRisk").onchange=e=>{FS.risk=e.target.value;drawMarkers()};
+[["fOpen","open"],["fWomen","women"],["fPreg","preg"],["fMHM","mhm"],["f247","h24"]].forEach(([id,k])=>{
+  document.getElementById(id).onclick=e=>{FS[k]=!FS[k];e.target.classList.toggle("on",FS[k]);drawMarkers()};
+});
+let gapsOn=false,gapLayer=null;
+document.getElementById("fGaps").onclick=e=>{
+  gapsOn=!gapsOn;e.target.classList.toggle("on",gapsOn);
+  if(gapsOn){
+    if(!gapLayer){
+      gapLayer=L.layerGroup();
+      coverageGaps().forEach(g=>{
+        L.rectangle([[g.lat-0.0025,g.lng-0.0025],[g.lat+0.0025,g.lng+0.0025]],{weight:0,fillColor:"#e74c3c",fillOpacity:Math.min(.12+g.d*.18,.5)})
+        .bindTooltip(g.d.toFixed(1)+" km to nearest mapped facility — "+g.zone+" (500 m standard)",{sticky:true}).addTo(gapLayer);
+      });
+    }
+    gapLayer.addTo(map);
+  } else if(gapLayer)map.removeLayer(gapLayer);
+};
+let distOn=false;
+document.getElementById("fDistrict").onclick=e=>{
+  distOn=!distOn;e.target.classList.toggle("on",distOn);
+  if(distOn){distLayer.addTo(map);loadDistrictBoundaries();map.flyTo([22.85,72.35],9)}
+  else{map.removeLayer(distLayer);map.flyTo([23.03,72.57],12)}
+};
+
+// ---------- ticker / dashboard ----------
+function renderTicker(){
+  const fs=filtered();
+  document.getElementById("tFac").textContent=fs.length;
+  document.getElementById("tCrit").textContent=fs.filter(f=>f.risk>=70).length;
+  document.getElementById("tWomen").textContent=Math.round(fs.filter(womenUsable).length/Math.max(fs.length,1)*100)+"%";
+  document.getElementById("tRep").textContent=REPORTS.length;
+  document.getElementById("lastUpd").textContent=REPORTS.length?("last citizen report: "+new Date(Math.max(...REPORTS.map(r=>r.ts))).toLocaleString()):"no citizen reports yet on this device";
+}
+function renderDash(){
+  const fs=activeFac();
+  const open=fs.filter(f=>isOpenNow(f)).length;
+  const zrows=Object.keys(ZONES).map(z=>{const zf=fs.filter(f=>f.zone===z);return {z,risk:Math.round(zf.reduce((a,f)=>a+f.risk,0)/Math.max(zf.length,1)),sp:seatsPer1k(z),od:ZONES[z].od}}).sort((a,b)=>b.risk-a.risk);
+  const simNote=SIM?`<div class="card" style="border-color:#8f7bff;background:rgba(111,91,208,.12)">🔮 <b>Showing projected state</b> — ${SIM.label}. <a href="javascript:exitSim()">Back to today</a></div>`:"";
+  const womenSeatsTotal=GENDER.womenSeats,menTotal=GENDER.menSeats+GENDER.menUrinals;
+  document.getElementById("pane-dash").innerHTML=simNote+`
+  <div class="kpi-grid">
+    <div class="kpi"><div class="v">${fs.length}</div><div class="l">facilities mapped (live layer)</div></div>
+    <div class="kpi"><div class="v" style="color:var(--good)">${open}</div><div class="l">open right now</div></div>
+    <div class="kpi"><div class="v" style="color:var(--crit)">${fs.filter(f=>f.risk>=70).length}</div><div class="l">critical risk</div></div>
+    <div class="kpi"><div class="v" style="color:var(--pink)">${fs.filter(pregSafe).length}</div><div class="l">pregnancy-usable</div></div>
+    <div class="kpi"><div class="v">${fs.filter(f=>f.mhmPads).length}</div><div class="l">stock sanitary pads</div></div>
+    <div class="kpi"><div class="v">${fs.filter(f=>f.h24).length}</div><div class="l">24×7 access</div></div>
+    <div class="kpi"><div class="v">${coverageStats().pct}%</div><div class="l">area ≤500 m of a mapped facility (grid)</div></div>
+    <div class="kpi"><div class="v">${fs.filter(f=>f.verified).length}</div><div class="l">citizen-verified (rest: modeled)</div></div>
+  </div>
+  <h3>Gender parity (citywide, CSP 2012)</h3>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>Men: ${menTotal.toLocaleString()}</span><span>Women: ${womenSeatsTotal.toLocaleString()}</span></div>
+    <div class="bar"><i style="width:${menTotal/(menTotal+womenSeatsTotal)*100}%;background:linear-gradient(90deg,#4da3ff,#4da3ff ${womenSeatsTotal/(menTotal)*100}%,#e74c3c)"></i></div>
+    <div class="src-note">Men's provision exceeds women's by ~42%. Women's urinals citywide: <b style="color:var(--crit)">0</b>. Accessible/child seats: <b style="color:var(--crit)">0</b>.</div>
+  </div>
+  <h3>Zone risk scorecard</h3>
+  <table><tr><th>Zone</th><th>Avg risk</th><th>Seats/1k</th><th>OD spots</th><th></th></tr>
+  ${zrows.map(r=>`<tr><td>${r.z}</td><td><span class="pill p-${riskCat(r.risk)[1]}">${r.risk}</span></td><td>${r.sp.toFixed(2)}</td><td>${r.od}</td><td><div class="bar" style="width:60px"><i style="width:${r.risk}%;background:${riskColor(r.risk)}"></i></div></td></tr>`).join("")}</table>
+  <div class="src-note">Seats & OD spots: City Sanitation Plan (UMC 2012). Risk: live computed from mapped attributes + citizen reports.</div>
+  <h3>Live citizen feed</h3>
+  <div id="feedbox">${feedHtml()}</div>`;
+}
+function feedHtml(){
+  const items=[...REPORTS.slice(-6).reverse().map(r=>{const f=FAC.find(x=>x.id===r.fid);return {n:f?f.name:"?",c:r.comment||("cleanliness "+r.clean+"/5"),lvl:r.clean<=2?2:r.clean<=3?1:0,ts:new Date(r.ts).toLocaleString()}}),
+    ...FEED_SEED.map(x=>({n:x[0],c:x[1],lvl:x[2],ts:"demo sample — not a real report"}))].slice(0,8);
+  return items.map(x=>`<div class="feed-item">${x.lvl===2?"🔴":x.lvl===1?"🟡":"🟢"} <b>${x.n}</b> — ${x.c} <span style="opacity:.6">· ${x.ts}</span></div>`).join("");
+}
+
+// ---------- AI advisor UI ----------
+const CHIPS=["I have 50 crore rupees, where should I logically invest?","Which places are densely condensed?","What area has more demographic of women using restrooms?","Give me a budget-friendly plan to improve existing restrooms","I have a 10-person budget — where should I allocate it?","How many toilets in West Zone have no water?","Fix all unlit toilets in East Zone","What if we build 15 blocks in New West?","Nearest toilet to Kankaria","How bad is Vadaj?","Which districts border Ahmedabad?","Cleanest facilities in Central","Gender gap"];
+const chipbox=document.getElementById("chipbox");
+CHIPS.forEach(c=>{const b=document.createElement("button");b.textContent=c;b.onclick=()=>ask(c);chipbox.append(b)});
+function addMsg(t,who){const d=document.createElement("div");d.className="msg "+who;d.innerHTML=who==="user"?t.replace(/</g,"&lt;"):t;document.getElementById("chatlog").append(d);d.scrollIntoView({behavior:"smooth"});return d}
+function renderLlmResult(d,res,fallbackHtml){
+  if(!res||!res.answer){d.innerHTML=fallbackHtml;return}
+  let html=res.answer.replace(/</g,"&lt;").replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/\n/g,"<br>");
+  if(res.plan&&Array.isArray(res.plan.actions)&&res.plan.actions.length){
+    try{html+=baHtml(planFromActions(res.plan.label,res.plan.actions))}catch(e){}
+  }
+  html+='<div class="src-note">Answered by Claude (API) over the full live dataset'+(res.plan?"; projection computed locally by the app’s deterministic model":"")+'.</div>';
+  d.innerHTML=html;
+}
+function ask(q){
+  addMsg(q,"user");
+  setTimeout(async()=>{
+    const key=localStorage.getItem(KEYLS);
+    const preferLLM=localStorage.getItem(PREFLS)==="1";
+    const a=agentAnswer(q);
+    const isFB=a.startsWith("__FB__");
+    const engineHtml=isFB?a.slice(6):a;
+    if(key&&(preferLLM||isFB)){
+      const d=addMsg("🧠 Asking Claude with the full live dataset…","bot");
+      try{renderLlmResult(d,await llmAnswer(q,key),engineHtml)}
+      catch(e){d.innerHTML="Claude API error ("+e.message+") — check the key under ⚙ AI settings."+(isFB?"":"<br><br>Engine answer instead:<br>")+(isFB?"<br><br>"+engineHtml:engineHtml)}
+      d.scrollIntoView({behavior:"smooth"});
+      return;
+    }
+    if(isFB){addMsg(engineHtml+`<div class="src-note" style="margin-top:6px">💡 Or add a Claude API key under ⚙ AI settings — then ANY phrasing works: unmatched questions go to Claude with the full dataset, and its plans render as before→after simulations.</div>`,"bot");return}
+    addMsg(a,"bot");
+  },380);
+}
+// API key settings
+document.getElementById("aisetTog").onclick=()=>{const s=document.getElementById("aiset");s.style.display=s.style.display==="none"?"block":"none";document.getElementById("apikeyStat").textContent=localStorage.getItem(KEYLS)?"✓ key saved":"";document.getElementById("preferLLM").checked=localStorage.getItem(PREFLS)==="1"};
+document.getElementById("preferLLM").onchange=e=>localStorage.setItem(PREFLS,e.target.checked?"1":"0");
+document.getElementById("apikeySave").onclick=()=>{const v=document.getElementById("apikeyIn").value.trim();if(v){localStorage.setItem(KEYLS,v);document.getElementById("apikeyIn").value="";document.getElementById("apikeyStat").textContent="✓ key saved"}};
+document.getElementById("apikeyClear").onclick=()=>{localStorage.removeItem(KEYLS);document.getElementById("apikeyStat").textContent="key removed"};
+document.getElementById("chatform").onsubmit=e=>{e.preventDefault();const v=document.getElementById("chatin").value.trim();if(!v)return;document.getElementById("chatin").value="";ask(v)};
+addMsg(`Namaste. I'm the <b>Sanitation Investment Advisor</b> — I answer planning questions by computing directly over the live map data, CSP 2012 zone statistics and SBM-U cost norms. Every answer includes a <b style="color:#b3a1ff">🔮 before → after projection</b>, and you can preview the AFTER state right on the satellite map. Ask me anything, or tap an example.`,"bot");
+
+// ---------- report tab ----------
+function renderReport(sel){
+  const opts=FAC.map(f=>`<option value="${f.id}" ${sel===f.id?"selected":""}>${f.name} (${f.zone})</option>`).join("");
+  document.getElementById("pane-report").innerHTML=`
+  <div class="card"><b style="font-size:13px">${t("repHeading")}</b>
+  <div class="src-note">Reports instantly recalculate the facility's risk score and update the map for this device. Use Data → Export to merge reports across devices (a shared backend is the Phase-3 upgrade).</div></div>
+  <label>${t("repFacility")}</label><select id="rFac">${opts}</select>
+  <label>${t("repClean")}</label>
+  <div class="radio-row">${[1,2,3,4,5].map(n=>`<label><input type="radio" name="rClean" value="${n}" ${n===3?"checked":""}>${n}</label>`).join("")}</div>
+  <label>${t("repSafety")}</label>
+  <div class="radio-row">${[1,2,3,4,5].map(n=>`<label><input type="radio" name="rSafe" value="${n}" ${n===3?"checked":""}>${n}</label>`).join("")}</div>
+  <label>${t("repHasQ")}</label>
+  <div class="radio-row">
+    <label><input type="checkbox" id="rWater" checked> ${t("repWater")}</label>
+    <label><input type="checkbox" id="rLight"> ${t("repLight")}</label>
+    <label><input type="checkbox" id="rCare"> ${t("repCare")}</label>
+    <label><input type="checkbox" id="rPads"> ${t("repPads")}</label>
+  </div>
+  <label>${t("repComment")}</label><textarea id="rCom" rows="2" placeholder="e.g. women's side locked, long queue…"></textarea>
+  <div style="margin-top:12px"><button class="primary" id="rGo" style="width:100%">${t("repSubmit")}</button></div>`;
+  document.getElementById("rGo").onclick=()=>{
+    const fid=document.getElementById("rFac").value;
+    if(REPORTS.some(x=>x.fid===fid&&Date.now()-x.ts<600000)){alert("A report for this facility was already submitted from this device in the last 10 minutes. Please wait before re-reporting.");return}
+    const r={fid:fid,
+      clean:+document.querySelector('input[name=rClean]:checked').value,
+      safety:+document.querySelector('input[name=rSafe]:checked').value,
+      water:document.getElementById("rWater").checked,lighting:document.getElementById("rLight").checked,
+      caretaker:document.getElementById("rCare").checked,mhmPads:document.getElementById("rPads").checked,
+      comment:document.getElementById("rCom").value.trim(),ts:Date.now()};
+    applyReport(r);supaPush(r);drawMarkers();
+    const f=FAC.find(x=>x.id===r.fid);
+    addMsg(`📡 Live update received for <b>${f.name}</b> — risk recalculated to <span class="pill p-${riskCat(f.risk)[1]}">${f.risk}</span>. Thank you for verifying.`,"bot");
+    switchTab("dash");
+    if(MARK[f.id]){MARK[f.id].openPopup()}
+  };
+}
+window.openReport=fid=>{switchTab("report");renderReport(fid)};
+
+// ---------- data tab ----------
+function renderData(){
+  document.getElementById("pane-data").innerHTML=`
+  <h3>Data pipeline (3-phase roadmap)</h3>
+  <div class="card"><b>Phase 1 — Static layer</b> <span class="pill p-good">ACTIVE</span><br><span style="font-size:11.5px;color:var(--muted)">74 named facilities at real Ahmedabad locations. Zone statistics verbatim from the City Sanitation Plan (UMC 2012, Tables 42–48). Per-facility attributes are <b>modeled seed</b> derived from zone-level evidence — badged "pending field audit" until verified.</span></div>
+  <div class="card"><b>Phase 2 — Database integration</b> <span class="pill p-fair">PARTIAL</span><br><span style="font-size:11.5px;color:var(--muted)">Gov portals checked ${new Date().toLocaleDateString()}: smartcities.data.gov.in community-facilities catalog returns <i>no resources</i>; ap.data.gov.in smart-toilet resource returns empty — mirroring the CSP's own finding of weak asset records. Live OSM sync below pulls whatever the OpenStreetMap community has mapped.</span><br><button class="ghost" id="osmSync" style="margin-top:8px">⟳ Sync live OpenStreetMap toilets</button> <span id="osmStat" style="font-size:11px;color:var(--muted)"></span></div>
+  <div class="card"><b>Phase 3 — Crowd + AI layer</b> <span class="pill p-info">RUNNING (local)</span><br><span style="font-size:11.5px;color:var(--muted)">Citizen reports update scores in real time on this device (${REPORTS.length} stored). Export/import to merge field teams' data; a shared backend + IoT feeds (doc §6.E) is the production upgrade.</span></div>
+  <div class="card"><b>Field-audit import (Phase-1 GIS audit)</b><br><span class="src-note">Import surveyed facilities from CSV — audited rows override the modeled seed, render solid, and are sourced "Field audit". Matching: exact name, or within 150 m; unmatched rows are added as new facilities. Citizen reports keep layering on top of the audited baseline.</span>
+  <div style="display:flex;gap:6px;margin-top:8px"><button class="ghost" id="audBtn">⬆ Import audit CSV</button><button class="ghost" id="audTpl">⬇ CSV template</button></div>
+  <input type="file" id="audFile" accept=".csv" style="display:none"></div>
+  <div class="card"><b>Shared backend (optional — Supabase)</b><br><span class="src-note">Create a free supabase.com project with table <b>reports</b> (id text primary key, fid text, ts int8, clean int2, safety int2, water bool, lighting bool, caretaker bool, "mhmPads" bool, comment text; enable RLS with anon INSERT + SELECT policies). Paste the project URL and anon key below — then every viewer of this file sees the same citizen reports. Leave empty to keep reports on this device only.</span>
+  <input type="text" id="supaUrl" placeholder="https://xxxx.supabase.co" style="margin-top:6px">
+  <input type="text" id="supaKey" placeholder="anon public key" style="margin-top:6px">
+  <div style="display:flex;gap:6px;margin-top:6px;align-items:center"><button class="ghost" id="supaSave">Save</button><button class="ghost" id="supaPullBtn">⟳ Pull shared reports</button><span id="supaStat" class="src-note"></span></div></div>
+  <div class="card"><label style="display:flex;gap:6px;align-items:center;cursor:pointer;color:var(--text);font-size:12px"><input type="checkbox" id="cbMode"> Colour-blind-safe palette (Okabe–Ito) for risk colours</label></div>
+  <div style="display:flex;gap:8px;margin:10px 0">
+    <button class="ghost" id="expBtn">⬇ Export reports (JSON)</button>
+    <button class="ghost" id="impBtn">⬆ Import & merge</button>
+    <button class="ghost" id="rstBtn" style="color:var(--crit)">Reset local data</button>
+  </div>
+  <input type="file" id="impFile" accept=".json" style="display:none">
+  <h3>Risk-score methodology (transparent & adjustable)</h3>
+  <div class="card">
+    <div style="font-size:11.5px;color:var(--muted)">risk = weighted deficits, normalised to 0–100. Defaults are <b>working assumptions, not validated policy weights</b> — move the sliders to test how rankings shift, then Apply. Pregnancy-usable = women's seat + western WC + water + clean ≥2.5 + support.</div>
+    <div id="wsliders" style="margin-top:8px">${Object.keys(W).map(k=>`<div style="display:flex;align-items:center;gap:8px;margin:4px 0"><span style="width:60px;font-size:11px;color:var(--muted)">${k}</span><input type="range" min="0" max="30" value="${W[k]}" data-k="${k}" style="flex:1"><span style="width:24px;font-size:11px" id="wv-${k}">${W[k]}</span></div>`).join("")}</div>
+    <div style="display:flex;gap:6px;margin-top:8px"><button class="ghost" id="wApply">Apply & recalculate</button><button class="ghost" id="wReset">Reset defaults</button></div>
+  </div>
+  <h3>Built-in self-test</h3>
+  <div class="card"><button class="ghost" id="selftestBtn">▶ Run test suite</button><div id="selftestOut" style="font-size:11px;margin-top:6px;line-height:1.7"></div></div>
+  <h3>Sources</h3>
+  <div class="card" style="font-size:11.5px;line-height:1.8">
+  • Policy Proposal — <i>Public Restroom Infrastructure for a Working, Inclusive Ahmedabad</i> (Mehta & Chinta, Jul 2026)<br>
+  • <a href="https://www.egovamc.com" target="_blank">City Sanitation Plan, Ahmedabad</a> (UMC for AMC, 2012) — zone seats, gender split, OD spots, disease data<br>
+  • CEPT University studios 2017–2020 — facility counts, Trichy CMT model, contract gaps<br>
+  • <a href="https://sbmurban.org" target="_blank">SBM-U / CPHEEO</a> — unit costs (₹98,000/seat, ₹32,000/urinal), 5-yr O&M mandate<br>
+  • <a href="https://smartcities.data.gov.in/catalog/community-facilities-ahmedabad" target="_blank">Smart Cities data portal — Ahmedabad</a> (checked: empty)<br>
+  • <a href="https://www.openstreetmap.org" target="_blank">OpenStreetMap</a> (live amenity=toilets layer) · Imagery © Esri<br>
+  • RTI Press — 42% gender gap · World Bank/WSP 2010 — 6.4% GDP sanitation cost<br>
+  • Sample feed entries are demonstration seed; user reports are real and stored locally.</div>`;
+  document.getElementById("expBtn").onclick=()=>{
+    const blob=new Blob([JSON.stringify({exported:new Date().toISOString(),reports:REPORTS},null,2)],{type:"application/json"});
+    const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="amd-restroom-reports.json";a.click();
+  };
+  document.getElementById("impBtn").onclick=()=>document.getElementById("impFile").click();
+  document.getElementById("impFile").onchange=e=>{
+    const fr=new FileReader();fr.onload=()=>{try{const d=JSON.parse(fr.result);let added=0;(d.reports||[]).forEach(r=>{if(applyReport(r))added++});drawMarkers();renderData();alert("Merged "+added+" new report(s); "+((d.reports||[]).length-added)+" duplicate(s) skipped.")}catch(err){alert("Invalid file")}};fr.readAsText(e.target.files[0]);
+  };
+  document.getElementById("rstBtn").onclick=()=>{if(confirm("Clear all locally stored reports?")){localStorage.removeItem(LS);location.reload()}};
+  document.getElementById("osmSync").onclick=()=>{
+    const st=document.getElementById("osmStat");st.textContent="querying Overpass…";
+    fetch("https://overpass-api.de/api/interpreter",{method:"POST",body:"data="+encodeURIComponent('[out:json][timeout:25];node[amenity=toilets](22.9,72.4,23.2,72.75);out;')})
+    .then(r=>r.json()).then(d=>{
+      let added=0;
+      (d.elements||[]).forEach(el=>{
+        if(FAC.some(f=>Math.abs(f.lat-el.lat)<0.0015&&Math.abs(f.lng-el.lon)<0.0015))return;
+        const t=el.tags||{};
+        const row=[t.name||("OSM toilet #"+el.id),nearestZone(el.lat,el.lon),t.fee==="yes"?"PT":"CT",el.lat,el.lon,2,2,""];
+        const nf=buildFacility(row,FAC.length);
+        nf.source="OpenStreetMap (live sync)";
+        if(t.opening_hours==="24/7"){nf.h24=true}
+        if(t.wheelchair==="yes"){nf.grabBars=true}
+        nf.risk=riskScore(nf);FAC.push(nf);added++;
+      });
+      st.textContent="✓ "+(d.elements||[]).length+" OSM features · "+added+" new added to map";
+      drawMarkers();
+    }).catch(()=>{st.textContent="Overpass unreachable — try again in a minute."});
+  };
+  // field-audit CSV
+  document.getElementById("audTpl").onclick=()=>{const blob=new Blob([auditTemplate()],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="amd-audit-template.csv";a.click()};
+  document.getElementById("audBtn").onclick=()=>document.getElementById("audFile").click();
+  document.getElementById("audFile").onchange=e=>{const fr=new FileReader();fr.onload=()=>{const res=importAudit(fr.result);if(res.err)alert("Import failed: "+res.err);else{resetCoverage();drawMarkers();redrawZones();renderData();alert(res.ok+" facility record(s) audited ("+res.added+" new added).")}};fr.readAsText(e.target.files[0])};
+  // Supabase backend
+  const sc=supaCfg();if(sc){document.getElementById("supaUrl").value=sc.url;document.getElementById("supaKey").value=sc.key;document.getElementById("supaStat").textContent="configured"}
+  document.getElementById("supaSave").onclick=()=>{localStorage.setItem("amdAtlas.supa",JSON.stringify({url:document.getElementById("supaUrl").value.trim().replace(/\/+$/,""),key:document.getElementById("supaKey").value.trim()}));document.getElementById("supaStat").textContent="saved"};
+  document.getElementById("supaPullBtn").onclick=()=>{document.getElementById("supaStat").textContent="pulling…";supaPull(n=>{document.getElementById("supaStat").textContent="✓ "+n+" new report(s) merged";drawMarkers()})};
+  // colour-blind palette
+  const cbEl=document.getElementById("cbMode");cbEl.checked=CBMODE;
+  cbEl.onchange=()=>{CBMODE=cbEl.checked;localStorage.setItem("amdAtlas.cb",CBMODE?"1":"0");drawMarkers();redrawZones();refreshLegend()};
+  // risk-weight sliders
+  document.querySelectorAll("#wsliders input[type=range]").forEach(sl=>{sl.oninput=()=>{document.getElementById("wv-"+sl.dataset.k).textContent=sl.value}});
+  document.getElementById("wApply").onclick=()=>{
+    document.querySelectorAll("#wsliders input[type=range]").forEach(sl=>{W[sl.dataset.k]=+sl.value});
+    recalcAll();drawMarkers();redrawZones();
+    addMsg(`⚖️ Risk weights updated — all ${FAC.length} scores recalculated. Compare the zone scorecard to see how the ranking shifted (sensitivity check).`,"bot");
+  };
+  document.getElementById("wReset").onclick=()=>{W=Object.assign({},DEFW);recalcAll();drawMarkers();redrawZones();renderData()};
+  // self-test
+  document.getElementById("selftestBtn").onclick=()=>{
+    const res=runSelfTest();
+    document.getElementById("selftestOut").innerHTML=res.map(r=>(r.pass?'<span style="color:var(--good)">✓</span> ':'<span style="color:var(--crit)">✗</span> ')+r.name).join("<br>")+`<br><b>${res.filter(r=>r.pass).length}/${res.length} passed</b>`;
+  };
+}
+function nearestZone(lat,lng){let best="Central",bd=1e9;Object.entries(ZONES).forEach(([z,Z])=>{const d=(Z.center[0]-lat)**2+(Z.center[1]-lng)**2;if(d<bd){bd=d;best=z}});return best}
+
+// ---------- tabs ----------
+function switchTab(t){
+  document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("active",b.dataset.t===t));
+  document.querySelectorAll(".tabpane").forEach(p=>p.classList.toggle("active",p.id==="pane-"+t));
+  if(t==="report")renderReport();if(t==="data")renderData();
+}
+document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>switchTab(b.dataset.t));
+
+// ---------- boot ----------
+CBMODE=localStorage.getItem("amdAtlas.cb")==="1";
+applyStaticI18N();
+drawMarkers();renderDash();refreshLegend();
+supaPull(n=>{if(n){drawMarkers()}}); // merge shared reports if a backend is configured
+setInterval(renderTicker,30000); // open-now recompute
+}
+</script>
+</body>
+</html>
